@@ -1,26 +1,699 @@
 @import "tailwindcss";
 
+/* =========================================================
+   REVORA — GLOBAL DESIGN SYSTEM
+========================================================= */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* =======================================================
+     BACKGROUNDS
+  ======================================================= */
+
+  --background: #f4f3ef;
+  --surface: #ebeae5;
+  --surface-light: #fafaf7;
+
+  /* =======================================================
+     TEXT
+  ======================================================= */
+
+  --foreground: #111312;
+  --foreground-soft: #3d423f;
+  --muted: #7b817d;
+
+  /* =======================================================
+     BRAND
+  ======================================================= */
+
+  --carbon: #111312;
+  --graphite: #242826;
+
+  --accent: #b7ff3c;
+  --accent-dark: #8dcc27;
+
+  /* =======================================================
+     ANNOUNCEMENT
+  ======================================================= */
+
+  --announcement: #b42318;
+  --announcement-dark: #921b13;
+
+  /* =======================================================
+     BORDERS
+  ======================================================= */
+
+  --border: #d8dbd7;
+  --border-dark: #b9bdb9;
+
+  /* =======================================================
+     FEEDBACK
+  ======================================================= */
+
+  --success: #39754a;
+  --error: #a84343;
+
+  /* =======================================================
+     LAYOUT
+  ======================================================= */
+
+  --container: 1440px;
+
+  --page-padding: clamp(1.25rem, 4vw, 5rem);
+
+  /* =======================================================
+     FIXED SITE HEADER
+  ======================================================= */
+
+  --announcement-height: 36px;
+  --header-height: 76px;
+
+  --site-header-height: calc(
+    var(--announcement-height) + var(--header-height)
+  );
+
+  /* =======================================================
+     MOTION
+  ======================================================= */
+
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* =========================================================
+   RESET
+========================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  width: 100%;
+  max-width: 100%;
+
+  margin: 0;
+  padding: 0;
+
+  background: var(--background);
+
+  scroll-behavior: smooth;
 }
 
 body {
+  width: 100%;
+  max-width: 100%;
+
+  min-height: 100vh;
+
+  margin: 0;
+  padding: 0;
+
+  overflow-x: clip;
+
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+
+  font-family: var(--font-inter), Arial, sans-serif;
+
+  font-size: 16px;
+  line-height: 1.6;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* =========================================================
+   TYPOGRAPHY RESET
+========================================================= */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-manrope), Arial, sans-serif;
+
+  font-weight: 600;
+
+  line-height: 1.08;
+
+  letter-spacing: -0.035em;
+}
+
+a {
+  color: inherit;
+
+  text-decoration: none;
+}
+
+/* =========================================================
+   MEDIA
+========================================================= */
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+/* =========================================================
+   BUTTONS + FORMS
+========================================================= */
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+
+  color: inherit;
+
+  background: transparent;
+
+  border: 0;
+
+  cursor: pointer;
+}
+
+input,
+textarea,
+select {
+  color: var(--foreground);
+
+  background: transparent;
+
+  border: 0;
+  border-radius: 0;
+
+  outline: none;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+/* =========================================================
+   FOCUS
+========================================================= */
+
+:focus-visible {
+  outline: 2px solid var(--accent-dark);
+  outline-offset: 4px;
+}
+
+/* =========================================================
+   SELECTION
+========================================================= */
+
+::selection {
+  color: var(--carbon);
+
+  background: var(--accent);
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #a8ada9;
+
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #858b87;
+}
+
+/* =========================================================
+   CONTAINER
+========================================================= */
+
+.revora-container {
+  width: 100%;
+  max-width: var(--container);
+
+  margin-inline: auto;
+
+  padding-inline: var(--page-padding);
+}
+
+/* =========================================================
+   SECTION
+========================================================= */
+
+.revora-section {
+  position: relative;
+
+  width: 100%;
+
+  padding-block: clamp(5rem, 9vw, 9rem);
+}
+
+/* =========================================================
+   EYEBROW
+========================================================= */
+
+.revora-eyebrow {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 0.75rem;
+
+  font-family: var(--font-manrope), Arial, sans-serif;
+
+  font-size: 0.7rem;
+  font-weight: 700;
+
+  line-height: 1;
+
+  letter-spacing: 0.16em;
+
+  text-transform: uppercase;
+}
+
+.revora-eyebrow::before {
+  content: "";
+
+  width: 24px;
+  height: 1px;
+
+  background: currentColor;
+}
+
+/* =========================================================
+   DISPLAY
+========================================================= */
+
+.revora-display {
+  font-family: var(--font-manrope), Arial, sans-serif;
+
+  font-size: clamp(2.75rem, 6vw, 6.75rem);
+
+  font-weight: 600;
+
+  line-height: 0.95;
+
+  letter-spacing: -0.06em;
+}
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.revora-title {
+  font-family: var(--font-manrope), Arial, sans-serif;
+
+  font-size: clamp(2rem, 4vw, 4.25rem);
+
+  font-weight: 600;
+
+  line-height: 1;
+
+  letter-spacing: -0.045em;
+}
+
+/* =========================================================
+   DESCRIPTION
+========================================================= */
+
+.revora-description {
+  max-width: 620px;
+
+  color: var(--foreground-soft);
+
+  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
+
+  line-height: 1.75;
+}
+
+/* =========================================================
+   GLOBAL BUTTON
+========================================================= */
+
+.revora-button {
+  position: relative;
+
+  display: inline-flex;
+
+  min-height: 52px;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 0.75rem;
+
+  padding: 0.9rem 1.6rem;
+
+  overflow: hidden;
+
+  font-family: var(--font-manrope), Arial, sans-serif;
+
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  line-height: 1;
+
+  letter-spacing: 0.08em;
+
+  text-transform: uppercase;
+
+  transition:
+    color 400ms var(--ease-premium),
+    background-color 400ms var(--ease-premium),
+    border-color 400ms var(--ease-premium),
+    transform 400ms var(--ease-premium);
+}
+
+/* =========================================================
+   DARK BUTTON
+========================================================= */
+
+.revora-button-dark {
+  color: #ffffff;
+
+  background: var(--carbon);
+}
+
+.revora-button-dark:hover {
+  color: var(--carbon);
+
+  background: var(--accent);
+
+  transform: translateY(-2px);
+}
+
+/* =========================================================
+   ACCENT BUTTON
+========================================================= */
+
+.revora-button-accent {
+  color: var(--carbon);
+
+  background: var(--accent);
+}
+
+.revora-button-accent:hover {
+  background: #ffffff;
+
+  transform: translateY(-2px);
+}
+
+/* =========================================================
+   DIVIDER
+========================================================= */
+
+.revora-divider {
+  width: 100%;
+  height: 1px;
+
+  background: var(--border);
+}
+
+/* =========================================================
+   HERO FOAM EFFECT
+========================================================= */
+
+.revora-foam-particle {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  display: block;
+
+  pointer-events: none;
+
+  border-radius: 999px;
+
+  background:
+    radial-gradient(
+      circle at 32% 30%,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 0.98) 20%,
+      rgba(250, 252, 251, 0.9) 38%,
+      rgba(239, 244, 241, 0.72) 55%,
+      rgba(220, 228, 223, 0.38) 70%,
+      rgba(255, 255, 255, 0) 82%
+    );
+
+  box-shadow:
+    0 0 5px rgba(255, 255, 255, 0.35),
+    inset -2px -2px 5px rgba(180, 190, 184, 0.16);
+
+  filter: blur(0.25px);
+
+  transform: translateZ(0);
+
+  will-change:
+    transform,
+    opacity;
+}
+
+/* =========================================================
+   FOAM PARTICLE VARIATION
+========================================================= */
+
+.revora-foam-particle:nth-child(3n) {
+  border-radius: 56% 44% 52% 48%;
+}
+
+.revora-foam-particle:nth-child(4n) {
+  border-radius: 42% 58% 46% 54%;
+}
+
+.revora-foam-particle:nth-child(5n) {
+  filter: blur(0.8px);
+}
+
+/* =========================================================
+   FOAM MIST
+========================================================= */
+
+.revora-foam-mist {
+  pointer-events: none;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse at left center,
+      rgba(255, 255, 255, 0.75) 0%,
+      rgba(255, 255, 255, 0.46) 18%,
+      rgba(250, 252, 251, 0.27) 35%,
+      rgba(245, 248, 246, 0.12) 54%,
+      rgba(255, 255, 255, 0) 76%
+    );
+
+  transform-origin: left center;
+
+  will-change:
+    transform,
+    opacity;
+}
+
+/* =========================================================
+   FOAM TRAIL
+========================================================= */
+
+.revora-foam-trail {
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.48) 0%,
+      rgba(255, 255, 255, 0.31) 16%,
+      rgba(248, 251, 249, 0.18) 30%,
+      rgba(245, 248, 246, 0.08) 48%,
+      rgba(255, 255, 255, 0) 72%
+    );
+
+  clip-path:
+    polygon(
+      0 0,
+      28% 0,
+      100% 100%,
+      66% 100%
+    );
+
+  transform-origin: top left;
+
+  will-change:
+    transform,
+    opacity;
+}
+
+/* =========================================================
+   ANNOUNCEMENT BAR HELPERS
+========================================================= */
+
+.revora-announcement {
+  width: 100%;
+
+  height: var(--announcement-height);
+
+  overflow: hidden;
+
+  background: var(--announcement);
+
+  color: #ffffff;
+}
+
+/* =========================================================
+   RESPONSIVE — LAPTOP / TABLET
+========================================================= */
+
+@media (max-width: 1024px) {
+  :root {
+    --header-height: 70px;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+  :root {
+    --header-height: 66px;
+  }
+
+  .revora-section {
+    padding-block: 4.5rem;
+  }
+
+  /* -------------------------------------------------------
+     FOAM PERFORMANCE
+  ------------------------------------------------------- */
+
+  .revora-foam-particle {
+    filter: none;
+
+    box-shadow:
+      0 0 3px rgba(255, 255, 255, 0.24);
+  }
+
+  .revora-foam-particle:nth-child(5n) {
+    filter: blur(0.35px);
+  }
+
+  .revora-foam-trail {
+    filter: blur(12px);
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+  :root {
+    --page-padding: 1.125rem;
+  }
+}
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (max-width: 350px) {
+  :root {
+    --page-padding: 1rem;
+  }
+}
+
+/* =========================================================
+   SHORT SCREENS
+========================================================= */
+
+@media (max-height: 650px) {
+  :root {
+    --announcement-height: 32px;
+    --header-height: 62px;
+  }
+}
+
+/* =========================================================
+   TOUCH DEVICES
+========================================================= */
+
+@media (hover: none) {
+  .revora-button-dark:hover {
+    color: #ffffff;
+
+    background: var(--carbon);
+
+    transform: none;
+  }
+
+  .revora-button-accent:hover {
+    background: var(--accent);
+
+    transform: none;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+
+    transition-duration: 0.01ms !important;
+  }
+
+  .revora-foam-particle,
+  .revora-foam-mist,
+  .revora-foam-trail,
+  .revora-foam-spray {
+    display: none !important;
+  }
 }
