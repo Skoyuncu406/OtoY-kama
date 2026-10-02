@@ -86,7 +86,7 @@ export default function Hero() {
           inset-0
           -z-20
 
-          bg-[linear-gradient(180deg,rgba(8,10,9,0.20)_0%,rgba(8,10,9,0.42)_40%,rgba(8,10,9,0.86)_100%)]
+          bg-[linear-gradient(180deg,rgba(8,10,9,0.18)_0%,rgba(8,10,9,0.40)_38%,rgba(8,10,9,0.88)_100%)]
 
           lg:hidden
         "
@@ -104,17 +104,17 @@ export default function Hero() {
           bottom-0
           -z-20
 
-          h-[42%]
+          h-[45%]
 
           bg-gradient-to-t
-          from-black/60
+          from-black/65
           via-black/20
           to-transparent
         "
       />
 
       {/* =====================================================
-          SUBTLE TECHNICAL GRID
+          TECHNICAL GRID
       ====================================================== */}
 
       <div
@@ -133,15 +133,12 @@ export default function Hero() {
 
       {/* =====================================================
           FOAM EFFECT
-          
-          Görselin üzerinde,
-          Hero yazılarının arkasında çalışır.
       ====================================================== */}
 
       <FoamEffect />
 
       {/* =====================================================
-          CONTENT
+          HERO CONTENT
       ====================================================== */}
 
       <div
@@ -155,7 +152,7 @@ export default function Hero() {
 
           grid-rows-[auto_1fr_auto]
 
-          py-5
+          py-4
 
           sm:py-6
           lg:py-7
@@ -170,19 +167,21 @@ export default function Hero() {
             className="
               flex
               items-center
-              gap-3
+              gap-2.5
 
               font-[family-name:var(--font-manrope)]
 
-              text-[9px]
+              text-[8px]
               font-semibold
               uppercase
 
-              tracking-[0.18em]
+              tracking-[0.15em]
 
               text-white/75
 
+              sm:gap-3
               sm:text-[10px]
+              sm:tracking-[0.18em]
             "
           >
             <span
@@ -224,7 +223,7 @@ export default function Hero() {
         </div>
 
         {/* ===================================================
-            CENTER
+            CENTER CONTENT
         ==================================================== */}
 
         <div
@@ -239,20 +238,21 @@ export default function Hero() {
 
             <p
               className="
-                mb-3
+                mb-2.5
 
                 font-[family-name:var(--font-manrope)]
 
-                text-[9px]
+                text-[8px]
                 font-bold
                 uppercase
 
-                tracking-[0.2em]
+                tracking-[0.18em]
 
                 text-[var(--accent)]
 
                 sm:mb-4
                 sm:text-[10px]
+                sm:tracking-[0.2em]
 
                 lg:mb-5
                 lg:text-[11px]
@@ -271,11 +271,11 @@ export default function Hero() {
 
                 font-[family-name:var(--font-manrope)]
 
-                text-[clamp(2.65rem,7vw,6.7rem)]
+                text-[clamp(2.35rem,10vw,6.7rem)]
                 font-semibold
 
-                leading-[0.88]
-                tracking-[-0.065em]
+                leading-[0.9]
+                tracking-[-0.06em]
 
                 text-white
               "
@@ -298,11 +298,11 @@ export default function Hero() {
 
             <p
               className="
-                mt-4
+                mt-3
                 max-w-[500px]
 
-                text-[12px]
-                leading-[1.7]
+                text-[11px]
+                leading-[1.65]
 
                 text-white/75
 
@@ -323,13 +323,17 @@ export default function Hero() {
 
             <div
               className="
-                mt-5
+                mt-4
 
                 flex
+                w-full
+                max-w-[400px]
+
                 items-center
                 gap-2
 
                 sm:mt-6
+                sm:max-w-none
                 sm:gap-3
 
                 lg:mt-7
@@ -346,24 +350,26 @@ export default function Hero() {
 
                   inline-flex
 
-                  h-[50px]
+                  h-[46px]
+                  min-w-0
+                  flex-1
 
                   items-center
                   justify-between
 
-                  gap-5
+                  gap-1.5
 
                   bg-[var(--accent)]
 
-                  px-4
+                  px-3
 
                   font-[family-name:var(--font-manrope)]
 
-                  text-[9px]
+                  text-[7.5px]
                   font-bold
                   uppercase
 
-                  tracking-[0.12em]
+                  tracking-[0.06em]
 
                   text-[var(--carbon)]
 
@@ -377,21 +383,25 @@ export default function Hero() {
                   hover:bg-white
                   hover:shadow-[0_14px_40px_rgba(0,0,0,0.25)]
 
+                  sm:h-[50px]
                   sm:min-w-[185px]
+                  sm:flex-none
                   sm:gap-7
                   sm:px-5
+                  sm:text-[9px]
+                  sm:tracking-[0.12em]
 
                   lg:h-[52px]
                   lg:min-w-[195px]
                   lg:px-6
                 "
               >
-                <span>
+                <span className="whitespace-nowrap">
                   Ürünleri Keşfet
                 </span>
 
                 <ArrowUpRight
-                  size={16}
+                  size={14}
                   strokeWidth={1.7}
                   className="
                     shrink-0
@@ -402,12 +412,15 @@ export default function Hero() {
 
                     group-hover:translate-x-1
                     group-hover:-translate-y-1
+
+                    sm:h-4
+                    sm:w-4
                   "
                 />
               </Link>
 
               {/* ===============================================
-                  SECONDARY CTA
+                  SECONDARY CTA — CATEGORIES
               ================================================ */}
 
               <Link
@@ -415,29 +428,31 @@ export default function Hero() {
                 className="
                   group
 
-                  hidden
+                  inline-flex
 
-                  h-[50px]
+                  h-[46px]
+                  min-w-0
+                  flex-1
 
                   items-center
                   justify-between
 
-                  gap-5
+                  gap-1.5
 
                   border
                   border-white/80
 
                   bg-[rgba(250,250,247,0.94)]
 
-                  px-4
+                  px-3
 
                   font-[family-name:var(--font-manrope)]
 
-                  text-[9px]
+                  text-[7.5px]
                   font-bold
                   uppercase
 
-                  tracking-[0.12em]
+                  tracking-[0.06em]
 
                   text-[var(--carbon)]
 
@@ -454,11 +469,13 @@ export default function Hero() {
                   hover:bg-white
                   hover:shadow-[0_14px_40px_rgba(0,0,0,0.25)]
 
-                  min-[390px]:inline-flex
-
+                  sm:h-[50px]
                   sm:min-w-[180px]
+                  sm:flex-none
                   sm:gap-7
                   sm:px-5
+                  sm:text-[9px]
+                  sm:tracking-[0.12em]
 
                   lg:h-[52px]
                   lg:min-w-[190px]
@@ -468,16 +485,24 @@ export default function Hero() {
                 <span
                   className="
                     flex
+                    min-w-0
                     items-center
-                    gap-2.5
+
+                    gap-1.5
+
+                    whitespace-nowrap
+
+                    sm:gap-2.5
                   "
                 >
                   <Grid2X2
-                    size={14}
+                    size={12}
                     strokeWidth={1.8}
                     className="
-                      hidden
-                      sm:block
+                      shrink-0
+
+                      sm:h-[14px]
+                      sm:w-[14px]
                     "
                   />
 
@@ -485,7 +510,7 @@ export default function Hero() {
                 </span>
 
                 <ArrowUpRight
-                  size={16}
+                  size={14}
                   strokeWidth={1.7}
                   className="
                     shrink-0
@@ -496,6 +521,9 @@ export default function Hero() {
 
                     group-hover:translate-x-1
                     group-hover:-translate-y-1
+
+                    sm:h-4
+                    sm:w-4
                   "
                 />
               </Link>
@@ -513,12 +541,15 @@ export default function Hero() {
             items-end
             justify-between
 
-            gap-4
+            gap-3
 
             border-t
             border-white/20
 
-            pt-4
+            pt-3
+
+            sm:gap-4
+            sm:pt-4
           "
         >
           {/* =================================================
@@ -609,7 +640,7 @@ export default function Hero() {
               flex
               items-center
 
-              gap-4
+              gap-3
 
               sm:gap-7
               lg:gap-10
@@ -656,7 +687,8 @@ function HeroMeta({
         flex
         items-start
 
-        gap-2
+        gap-1.5
+
         sm:gap-3
       "
     >
@@ -666,14 +698,15 @@ function HeroMeta({
 
           font-[family-name:var(--font-manrope)]
 
-          text-[7px]
+          text-[6px]
           font-bold
 
-          tracking-[0.14em]
+          tracking-[0.12em]
 
           text-[var(--accent)]
 
           sm:text-[8px]
+          sm:tracking-[0.14em]
         "
       >
         {number}
@@ -684,15 +717,16 @@ function HeroMeta({
           className="
             font-[family-name:var(--font-manrope)]
 
-            text-[8px]
+            text-[7px]
             font-semibold
             uppercase
 
-            tracking-[0.1em]
+            tracking-[0.07em]
 
             text-white
 
             sm:text-[9px]
+            sm:tracking-[0.1em]
           "
         >
           {title}
