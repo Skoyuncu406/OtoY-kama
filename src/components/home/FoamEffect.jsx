@@ -1,40 +1,75 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef } from "react";
+import {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from "react";
+
 import gsap from "gsap";
+
+/* =========================================================
+   CONFIG
+========================================================= */
 
 const DESKTOP_PARTICLE_COUNT = 48;
 const MOBILE_PARTICLE_COUNT = 24;
 
+/* =========================================================
+   FOAM EFFECT
+========================================================= */
+
 export default function FoamEffect() {
   const rootRef = useRef(null);
+
   const mistRef = useRef(null);
   const trailRef = useRef(null);
+
   const particlesRef = useRef([]);
 
-  /*
-   * Rastgele değerleri render sırasında üretmiyoruz.
-   * Böylece React hydration problemi yaşamıyoruz.
-   */
+  /* =======================================================
+     PARTICLE DATA
+  ======================================================== */
+
   const particles = useMemo(() => {
     return Array.from(
-      { length: DESKTOP_PARTICLE_COUNT },
+      {
+        length: DESKTOP_PARTICLE_COUNT,
+      },
       (_, index) => ({
         id: index,
       })
     );
   }, []);
 
+  /* =======================================================
+     GSAP ANIMATION
+  ======================================================== */
+
   useLayoutEffect(() => {
     const root = rootRef.current;
+    const mist = mistRef.current;
+    const trail = trailRef.current;
 
-    if (!root) return;
+    if (!root || !mist || !trail) {
+      return;
+    }
+
+    /* -----------------------------------------------------
+       ACCESSIBILITY
+    ------------------------------------------------------ */
 
     const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
-    if (reducedMotion) return;
+    if (reducedMotion) {
+      return;
+    }
+
+    /* -----------------------------------------------------
+       RESPONSIVE SETTINGS
+    ------------------------------------------------------ */
 
     const isMobile = window.innerWidth < 768;
 
@@ -42,203 +77,402 @@ export default function FoamEffect() {
       ? MOBILE_PARTICLE_COUNT
       : DESKTOP_PARTICLE_COUNT;
 
-    const activeParticles = particlesRef.current
-      .filter(Boolean)
-      .slice(0, activeParticleCount);
+    const allParticles =
+      particlesRef.current.filter(Boolean);
+
+    const activeParticles =
+      allParticles.slice(
+        0,
+        activeParticleCount
+      );
+
+    const inactiveParticles =
+      allParticles.slice(
+        activeParticleCount
+      );
+
+    /* -----------------------------------------------------
+       GSAP CONTEXT
+    ------------------------------------------------------ */
 
     const ctx = gsap.context(() => {
-      /* =====================================================
-         INITIAL STATES
-      ====================================================== */
+      /* ===================================================
+         IMPORTANT:
+         Everything remains invisible before animation.
+      ==================================================== */
 
-      gsap.set(mistRef.current, {
+      gsap.set(root, {
+        visibility: "visible",
+      });
+
+      /* ===================================================
+         MIST INITIAL STATE
+      ==================================================== */
+
+      gsap.set(mist, {
+        visibility: "visible",
+
         x: -120,
         y: -80,
+
         scaleX: 0.2,
         scaleY: 0.5,
+
         rotation: 30,
+
         opacity: 0,
+
         transformOrigin: "left center",
       });
 
-      gsap.set(trailRef.current, {
+      /* ===================================================
+         TRAIL INITIAL STATE
+      ==================================================== */
+
+      gsap.set(trail, {
+        visibility: "visible",
+
         x: -160,
         y: -130,
+
         scaleX: 0.3,
         scaleY: 0.5,
+
         rotation: 28,
+
         opacity: 0,
+
         transformOrigin: "left top",
       });
 
-      activeParticles.forEach((particle) => {
-        gsap.set(particle, {
-          x: gsap.utils.random(-50, 70),
-          y: gsap.utils.random(-40, 60),
+      /* ===================================================
+         ACTIVE PARTICLES
+      ==================================================== */
 
-          scale: gsap.utils.random(0.45, 1),
+      activeParticles.forEach(
+        (particle) => {
+          gsap.set(particle, {
+            visibility: "visible",
 
-          opacity: 0,
+            x: gsap.utils.random(
+              -50,
+              70
+            ),
 
-          rotation: gsap.utils.random(-40, 40),
+            y: gsap.utils.random(
+              -40,
+              60
+            ),
+
+            scale: gsap.utils.random(
+              0.45,
+              1
+            ),
+
+            opacity: 0,
+
+            rotation:
+              gsap.utils.random(
+                -40,
+                40
+              ),
+          });
+        }
+      );
+
+      /* ===================================================
+         UNUSED MOBILE PARTICLES
+      ==================================================== */
+
+      if (inactiveParticles.length) {
+        gsap.set(
+          inactiveParticles,
+          {
+            visibility: "hidden",
+            opacity: 0,
+          }
+        );
+      }
+
+      /* ===================================================
+         TIMELINE
+      ==================================================== */
+
+      const timeline =
+        gsap.timeline({
+          delay: 0.65,
         });
-      });
 
-      /* =====================================================
-         MASTER TIMELINE
-      ====================================================== */
-
-      const timeline = gsap.timeline({
-        delay: 0.65,
-      });
-
-      /* =====================================================
-         MIST ENTERS
-      ====================================================== */
+      /* ===================================================
+         01 — MIST ENTER
+      ==================================================== */
 
       timeline.to(
-        mistRef.current,
+        mist,
         {
-          x: isMobile ? 20 : 60,
-          y: isMobile ? 10 : 30,
+          x: isMobile
+            ? 20
+            : 60,
+
+          y: isMobile
+            ? 10
+            : 30,
 
           scaleX: 1,
           scaleY: 1,
 
-          opacity: 0.75,
+          opacity: 0.78,
 
-          duration: 0.45,
+          duration: 0.5,
 
           ease: "power3.out",
         },
         0
       );
 
-      /* =====================================================
-         FOAM TRAIL
-      ====================================================== */
+      /* ===================================================
+         02 — SPRAY TRAIL ENTER
+      ==================================================== */
 
       timeline.to(
-        trailRef.current,
+        trail,
         {
-          x: isMobile ? -40 : -20,
-          y: isMobile ? -20 : -10,
+          x: isMobile
+            ? -40
+            : -20,
+
+          y: isMobile
+            ? -20
+            : -10,
 
           scaleX: 1,
           scaleY: 1,
 
-          opacity: 0.26,
+          opacity: 0.28,
 
-          duration: 0.75,
+          duration: 0.8,
 
           ease: "power2.out",
         },
-        0.15
+        0.12
       );
 
-      /* =====================================================
-         PARTICLES
-      ====================================================== */
+      /* ===================================================
+         03 — PARTICLE SPRAY
+      ==================================================== */
 
-      activeParticles.forEach((particle, index) => {
-        const progress =
-          index / Math.max(activeParticles.length - 1, 1);
-
-        const targetX = isMobile
-          ? 100 + progress * 260 + gsap.utils.random(-40, 80)
-          : 160 + progress * 680 + gsap.utils.random(-70, 130);
-
-        const targetY = isMobile
-          ? 80 + progress * 280 + gsap.utils.random(-60, 70)
-          : 100 + progress * 430 + gsap.utils.random(-80, 100);
-
-        timeline.to(
+      activeParticles.forEach(
+        (
           particle,
-          {
-            x: targetX,
-            y: targetY,
+          index
+        ) => {
+          const progress =
+            index /
+            Math.max(
+              activeParticles.length -
+                1,
+              1
+            );
 
-            scale: gsap.utils.random(0.7, 1.65),
+          const targetX =
+            isMobile
+              ? 100 +
+                progress * 290 +
+                gsap.utils.random(
+                  -40,
+                  80
+                )
+              : 160 +
+                progress * 720 +
+                gsap.utils.random(
+                  -70,
+                  130
+                );
 
-            opacity: gsap.utils.random(0.55, 1),
+          const targetY =
+            isMobile
+              ? 80 +
+                progress * 300 +
+                gsap.utils.random(
+                  -60,
+                  70
+                )
+              : 100 +
+                progress * 460 +
+                gsap.utils.random(
+                  -80,
+                  100
+                );
 
-            rotation: gsap.utils.random(-180, 180),
+          timeline.to(
+            particle,
+            {
+              x: targetX,
+              y: targetY,
 
-            duration: gsap.utils.random(0.8, 1.4),
+              scale:
+                gsap.utils.random(
+                  0.7,
+                  1.65
+                ),
 
-            ease: "power2.out",
-          },
-          0.18 + index * 0.012
-        );
-      });
+              opacity:
+                gsap.utils.random(
+                  0.55,
+                  1
+                ),
 
-      /* =====================================================
-         MOVE SPRAY ACROSS HERO
-      ====================================================== */
+              rotation:
+                gsap.utils.random(
+                  -180,
+                  180
+                ),
+
+              duration:
+                gsap.utils.random(
+                  1.3,
+                  2
+                ),
+
+              ease: "power2.out",
+            },
+
+            0.18 +
+              index * 0.022
+          );
+        }
+      );
+
+      /* ===================================================
+         04 — LONG SPRAY MOVEMENT
+      ==================================================== */
 
       timeline.to(
-        mistRef.current,
+        mist,
         {
-          x: isMobile ? 160 : 420,
-          y: isMobile ? 130 : 260,
+          x: isMobile
+            ? 190
+            : 520,
+
+          y: isMobile
+            ? 150
+            : 300,
 
           rotation: 38,
 
-          scaleX: 1.2,
+          scaleX: 1.25,
+          scaleY: 1.05,
 
-          opacity: 0.45,
+          opacity: 0.5,
 
-          duration: 1.15,
+          duration: 2.6,
 
           ease: "power1.inOut",
         },
         0.45
       );
 
-      /* =====================================================
-         MIST DISAPPEARS
-      ====================================================== */
+      /* ===================================================
+         05 — TRAIL CONTINUES
+      ==================================================== */
 
       timeline.to(
-        mistRef.current,
+        trail,
         {
-          opacity: 0,
+          x: isMobile
+            ? 90
+            : 260,
+
+          y: isMobile
+            ? 70
+            : 150,
+
+          scaleX: 1.15,
+          scaleY: 1,
+
+          rotation: 32,
+
+          opacity: 0.2,
+
+          duration: 2.5,
+
+          ease: "power1.inOut",
+        },
+        0.7
+      );
+
+      /* ===================================================
+         06 — MIST FADE
+      ==================================================== */
+
+      timeline.to(
+        mist,
+        {
+          x: isMobile
+            ? 230
+            : 610,
+
+          y: isMobile
+            ? 175
+            : 330,
 
           scaleX: 1.4,
 
-          duration: 0.6,
+          opacity: 0,
+
+          duration: 1,
 
           ease: "power2.out",
         },
-        1.45
+        3.05
       );
 
-      /* =====================================================
-         PARTICLES SETTLE
-      ====================================================== */
+      /* ===================================================
+         07 — PARTICLES SETTLE
+      ==================================================== */
 
       timeline.to(
         activeParticles,
         {
           y: "+=25",
 
-          opacity: 0.3,
+          opacity: 0.35,
 
-          duration: 1.2,
+          duration: 1.5,
 
           stagger: {
-            amount: 0.25,
+            amount: 0.35,
             from: "random",
           },
 
           ease: "sine.out",
         },
-        1.65
+        3.1
       );
 
-      /* =====================================================
-         FINAL PARTICLE FADE
-      ====================================================== */
+      /* ===================================================
+         08 — TRAIL FADE
+      ==================================================== */
+
+      timeline.to(
+        trail,
+        {
+          x: isMobile
+            ? 140
+            : 360,
+
+          opacity: 0,
+
+          duration: 1.4,
+
+          ease: "power2.out",
+        },
+        3.8
+      );
+
+      /* ===================================================
+         09 — PARTICLES FADE
+      ==================================================== */
 
       timeline.to(
         activeParticles,
@@ -249,39 +483,52 @@ export default function FoamEffect() {
 
           opacity: 0,
 
-          duration: 1.4,
+          duration: 1.8,
 
           stagger: {
-            amount: 0.35,
+            amount: 0.45,
             from: "random",
           },
 
           ease: "power2.out",
         },
-        2.65
+        4.2
       );
 
-      /* =====================================================
-         TRAIL FADE
-      ====================================================== */
+      /* ===================================================
+         10 — COMPLETELY HIDE EFFECT
+      ==================================================== */
 
-      timeline.to(
-        trailRef.current,
+      timeline.set(
+        [
+          mist,
+          trail,
+          ...activeParticles,
+        ],
         {
+          visibility:
+            "hidden",
           opacity: 0,
-
-          duration: 1.4,
-
-          ease: "power2.out",
-        },
-        2.25
+        }
       );
     }, root);
+
+    /* =====================================================
+       CLEANUP
+
+       Important for React Strict Mode.
+       The first development-mode execution is cleaned up
+       before GSAP initializes the second one.
+    ====================================================== */
 
     return () => {
       ctx.revert();
     };
   }, []);
+
+  /* =======================================================
+     RENDER
+  ======================================================== */
 
   return (
     <div
@@ -289,18 +536,29 @@ export default function FoamEffect() {
       aria-hidden="true"
       className="
         pointer-events-none
+
         absolute
         inset-0
+
         z-10
+
         overflow-hidden
       "
     >
-      {/* =====================================================
-          FOAM TRAIL
-      ====================================================== */}
+      {/* ===================================================
+          SPRAY TRAIL
+
+          Initial inline styles prevent the browser from
+          displaying this even for a single frame before
+          GSAP initializes.
+      ==================================================== */}
 
       <div
         ref={trailRef}
+        style={{
+          opacity: 0,
+          visibility: "hidden",
+        }}
         className="
           revora-foam-trail
 
@@ -316,12 +574,16 @@ export default function FoamEffect() {
         "
       />
 
-      {/* =====================================================
-          SPRAY MIST
-      ====================================================== */}
+      {/* ===================================================
+          FOAM MIST
+      ==================================================== */}
 
       <div
         ref={mistRef}
+        style={{
+          opacity: 0,
+          visibility: "hidden",
+        }}
         className="
           revora-foam-mist
 
@@ -337,30 +599,45 @@ export default function FoamEffect() {
         "
       />
 
-      {/* =====================================================
-          PARTICLES
-      ====================================================== */}
+      {/* ===================================================
+          FOAM PARTICLES
+      ==================================================== */}
 
-      {particles.map((particle, index) => (
-        <span
-          key={particle.id}
-          ref={(element) => {
-            particlesRef.current[index] = element;
-          }}
-          className="
-            revora-foam-particle
+      {particles.map(
+        (
+          particle,
+          index
+        ) => (
+          <span
+            key={
+              particle.id
+            }
+            ref={(
+              element
+            ) => {
+              particlesRef.current[
+                index
+              ] =
+                element;
+            }}
+            style={{
+              opacity: 0,
+              visibility:
+                "hidden",
+            }}
+            className="
+              revora-foam-particle
 
-            absolute
-            left-0
-            top-0
+              absolute
+              left-0
+              top-0
 
-            h-[18px]
-            w-[18px]
-
-            opacity-0
-          "
-        />
-      ))}
+              h-[18px]
+              w-[18px]
+            "
+          />
+        )
+      )}
     </div>
   );
 }
