@@ -1,3 +1,6 @@
+
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 
@@ -10,25 +13,110 @@ import {
 import FoamEffect from "./FoamEffect";
 
 export default function Hero() {
+  // Kategoriler bölümüne yumuşak kaydırma
+  const handleCategoriesClick = (event) => {
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    const section = document.getElementById("kategoriler");
+
+    if (!section) return;
+
+    event.preventDefault();
+
+    const header = document.querySelector(
+      "[data-revora-sticky-header]"
+    );
+
+    const headerHeight = header
+      ? header.getBoundingClientRect().height
+      : 0;
+
+    const sectionTop =
+      section.getBoundingClientRect().top +
+      window.scrollY;
+
+    const targetPosition = Math.max(
+      0,
+      sectionTop - headerHeight
+    );
+
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    window.scrollTo({
+      top: targetPosition,
+      behavior: reducedMotion ? "auto" : "smooth",
+    });
+
+    // Hash'i güncelle, Next.js history state'ini koru.
+    if (window.location.hash !== "#kategoriler") {
+      window.history.replaceState(
+        window.history.state,
+        "",
+        "/#kategoriler"
+      );
+    }
+  };
+
+  // Alttaki Keşfet butonu
+  const handleExploreClick = () => {
+    const section = document.getElementById("kategoriler");
+
+    if (!section) return;
+
+    const header = document.querySelector(
+      "[data-revora-sticky-header]"
+    );
+
+    const headerHeight = header
+      ? header.getBoundingClientRect().height
+      : 0;
+
+    const sectionTop =
+      section.getBoundingClientRect().top +
+      window.scrollY;
+
+    window.scrollTo({
+      top: Math.max(0, sectionTop - headerHeight),
+      behavior: window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches
+        ? "auto"
+        : "smooth",
+    });
+
+    if (window.location.hash !== "#kategoriler") {
+      window.history.replaceState(
+        window.history.state,
+        "",
+        "/#kategoriler"
+      );
+    }
+  };
+
   return (
     <section
+      id="hero"
       className="
         relative
         isolate
-
         h-[calc(100svh-var(--site-header-height))]
         min-h-[460px]
-
         w-full
         overflow-hidden
-
         bg-[var(--carbon)]
       "
     >
-      {/* =====================================================
-          BACKGROUND IMAGE
-      ====================================================== */}
-
+      {/* BACKGROUND IMAGE */}
       <Image
         src="/images/hero/revora-hero.jpg"
         alt="Premium araç bakım ve detailing ürünleri"
@@ -42,60 +130,43 @@ export default function Hero() {
         "
       />
 
-      {/* =====================================================
-          DESKTOP LEFT CONTRAST OVERLAY
-      ====================================================== */}
-
+      {/* DESKTOP LEFT CONTRAST OVERLAY */}
       <div
         aria-hidden="true"
         className="
           absolute
           inset-0
           -z-30
-
           hidden
           lg:block
-
           bg-[linear-gradient(90deg,rgba(8,10,9,0.82)_0%,rgba(8,10,9,0.67)_28%,rgba(8,10,9,0.30)_52%,rgba(8,10,9,0.04)_78%)]
         "
       />
 
-      {/* =====================================================
-          GLOBAL CINEMATIC OVERLAY
-      ====================================================== */}
-
+      {/* GLOBAL CINEMATIC OVERLAY */}
       <div
         aria-hidden="true"
         className="
           absolute
           inset-0
           -z-30
-
           bg-black/10
         "
       />
 
-      {/* =====================================================
-          MOBILE OVERLAY
-      ====================================================== */}
-
+      {/* MOBILE OVERLAY */}
       <div
         aria-hidden="true"
         className="
           absolute
           inset-0
           -z-20
-
           bg-[linear-gradient(180deg,rgba(8,10,9,0.18)_0%,rgba(8,10,9,0.40)_38%,rgba(8,10,9,0.88)_100%)]
-
           lg:hidden
         "
       />
 
-      {/* =====================================================
-          BOTTOM GRADIENT
-      ====================================================== */}
-
+      {/* BOTTOM GRADIENT */}
       <div
         aria-hidden="true"
         className="
@@ -103,9 +174,7 @@ export default function Hero() {
           inset-x-0
           bottom-0
           -z-20
-
           h-[45%]
-
           bg-gradient-to-t
           from-black/65
           via-black/20
@@ -113,72 +182,49 @@ export default function Hero() {
         "
       />
 
-      {/* =====================================================
-          TECHNICAL GRID
-      ====================================================== */}
-
+      {/* TECHNICAL GRID */}
       <div
         aria-hidden="true"
         className="
           absolute
           inset-0
           -z-10
-
           opacity-[0.045]
-
           [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)]
           [background-size:80px_80px]
         "
       />
 
-      {/* =====================================================
-          FOAM EFFECT
-      ====================================================== */}
-
+      {/* FOAM EFFECT */}
       <FoamEffect />
 
-      {/* =====================================================
-          HERO CONTENT
-      ====================================================== */}
-
+      {/* HERO CONTENT */}
       <div
         className="
           revora-container
           relative
           z-20
-
           grid
           h-full
-
           grid-rows-[auto_1fr_auto]
-
           py-4
-
           sm:py-6
           lg:py-7
         "
       >
-        {/* ===================================================
-            TOP META
-        ==================================================== */}
-
+        {/* TOP META */}
         <div className="flex items-center justify-between">
           <div
             className="
               flex
               items-center
               gap-2.5
-
               font-[family-name:var(--font-manrope)]
-
               text-[8px]
               font-semibold
               uppercase
-
               tracking-[0.15em]
-
               text-white/75
-
               sm:gap-3
               sm:text-[10px]
               sm:tracking-[0.18em]
@@ -188,12 +234,9 @@ export default function Hero() {
               className="
                 h-[6px]
                 w-[6px]
-
                 shrink-0
                 rounded-full
-
                 bg-[var(--accent)]
-
                 shadow-[0_0_14px_rgba(183,255,60,0.65)]
               "
             />
@@ -204,17 +247,12 @@ export default function Hero() {
           <p
             className="
               hidden
-
               font-[family-name:var(--font-manrope)]
-
               text-[9px]
               font-semibold
               uppercase
-
               tracking-[0.18em]
-
               text-white/60
-
               md:block
             "
           >
@@ -222,10 +260,7 @@ export default function Hero() {
           </p>
         </div>
 
-        {/* ===================================================
-            CENTER CONTENT
-        ==================================================== */}
-
+        {/* CENTER CONTENT */}
         <div
           className="
             flex
@@ -235,25 +270,18 @@ export default function Hero() {
         >
           <div className="w-full max-w-[900px]">
             {/* EYEBROW */}
-
             <p
               className="
                 mb-2.5
-
                 font-[family-name:var(--font-manrope)]
-
                 text-[8px]
                 font-bold
                 uppercase
-
                 tracking-[0.18em]
-
                 text-[var(--accent)]
-
                 sm:mb-4
                 sm:text-[10px]
                 sm:tracking-[0.2em]
-
                 lg:mb-5
                 lg:text-[11px]
               "
@@ -261,128 +289,86 @@ export default function Hero() {
               Premium Car Care
             </p>
 
-            {/* =================================================
-                TITLE
-            ================================================== */}
-
+            {/* TITLE */}
             <h1
               className="
                 max-w-[900px]
-
                 font-[family-name:var(--font-manrope)]
-
                 text-[clamp(2.35rem,10vw,6.7rem)]
                 font-semibold
-
                 leading-[0.9]
                 tracking-[-0.06em]
-
                 text-white
               "
             >
               Kusursuzluk
 
-              <span
-                className="
-                  block
-                  text-white/60
-                "
-              >
+              <span className="block text-white/60">
                 detaylarda başlar.
               </span>
             </h1>
 
-            {/* =================================================
-                DESCRIPTION
-            ================================================== */}
-
+            {/* DESCRIPTION */}
             <p
               className="
                 mt-3
                 max-w-[500px]
-
                 text-[11px]
                 leading-[1.65]
-
                 text-white/75
-
                 sm:mt-5
                 sm:text-[14px]
-
                 lg:mt-6
                 lg:text-[15px]
               "
             >
-              Profesyonel detailing ürünleriyle aracınızın görünümünü
-              koruyun, yenileyin ve her detayda fark yaratın.
+              Profesyonel detailing ürünleriyle aracınızın
+              görünümünü koruyun, yenileyin ve her detayda
+              fark yaratın.
             </p>
 
-            {/* =================================================
-                CTA BUTTONS
-            ================================================== */}
-
+            {/* CTA BUTTONS */}
             <div
               className="
                 mt-4
-
                 flex
                 w-full
                 max-w-[400px]
-
                 items-center
                 gap-2
-
                 sm:mt-6
                 sm:max-w-none
                 sm:gap-3
-
                 lg:mt-7
               "
             >
-              {/* ===============================================
-                  PRIMARY CTA
-              ================================================ */}
-
+              {/* PRIMARY CTA */}
               <Link
                 href="/urunler"
                 className="
                   group
-
                   inline-flex
-
                   h-[46px]
                   min-w-0
                   flex-1
-
                   items-center
                   justify-between
-
                   gap-1.5
-
                   bg-[var(--accent)]
-
                   px-3
-
                   font-[family-name:var(--font-manrope)]
-
                   text-[7.5px]
                   font-bold
                   uppercase
-
                   tracking-[0.06em]
-
                   text-[var(--carbon)]
-
                   shadow-[0_10px_35px_rgba(0,0,0,0.18)]
-
                   transition-all
                   duration-500
                   ease-[var(--ease-premium)]
-
                   hover:-translate-y-[2px]
                   hover:bg-white
                   hover:shadow-[0_14px_40px_rgba(0,0,0,0.25)]
-
                   sm:h-[50px]
                   sm:min-w-[185px]
                   sm:flex-none
@@ -390,7 +376,6 @@ export default function Hero() {
                   sm:px-5
                   sm:text-[9px]
                   sm:tracking-[0.12em]
-
                   lg:h-[52px]
                   lg:min-w-[195px]
                   lg:px-6
@@ -405,70 +390,49 @@ export default function Hero() {
                   strokeWidth={1.7}
                   className="
                     shrink-0
-
                     transition-transform
                     duration-500
                     ease-[var(--ease-premium)]
-
                     group-hover:translate-x-1
                     group-hover:-translate-y-1
-
                     sm:h-4
                     sm:w-4
                   "
                 />
               </Link>
 
-              {/* ===============================================
-                  SECONDARY CTA — CATEGORIES
-              ================================================ */}
-
+              {/* SECONDARY CTA — CATEGORIES */}
               <Link
-                href="/kategoriler"
+                href="/#kategoriler"
+                onClick={handleCategoriesClick}
                 className="
                   group
-
                   inline-flex
-
                   h-[46px]
                   min-w-0
                   flex-1
-
                   items-center
                   justify-between
-
                   gap-1.5
-
                   border
                   border-white/80
-
                   bg-[rgba(250,250,247,0.94)]
-
                   px-3
-
                   font-[family-name:var(--font-manrope)]
-
                   text-[7.5px]
                   font-bold
                   uppercase
-
                   tracking-[0.06em]
-
                   text-[var(--carbon)]
-
                   shadow-[0_10px_35px_rgba(0,0,0,0.18)]
-
                   backdrop-blur-xl
-
                   transition-all
                   duration-500
                   ease-[var(--ease-premium)]
-
                   hover:-translate-y-[2px]
                   hover:border-white
                   hover:bg-white
                   hover:shadow-[0_14px_40px_rgba(0,0,0,0.25)]
-
                   sm:h-[50px]
                   sm:min-w-[180px]
                   sm:flex-none
@@ -476,7 +440,6 @@ export default function Hero() {
                   sm:px-5
                   sm:text-[9px]
                   sm:tracking-[0.12em]
-
                   lg:h-[52px]
                   lg:min-w-[190px]
                   lg:px-6
@@ -487,11 +450,8 @@ export default function Hero() {
                     flex
                     min-w-0
                     items-center
-
                     gap-1.5
-
                     whitespace-nowrap
-
                     sm:gap-2.5
                   "
                 >
@@ -500,7 +460,6 @@ export default function Hero() {
                     strokeWidth={1.8}
                     className="
                       shrink-0
-
                       sm:h-[14px]
                       sm:w-[14px]
                     "
@@ -514,14 +473,11 @@ export default function Hero() {
                   strokeWidth={1.7}
                   className="
                     shrink-0
-
                     transition-transform
                     duration-500
                     ease-[var(--ease-premium)]
-
                     group-hover:translate-x-1
                     group-hover:-translate-y-1
-
                     sm:h-4
                     sm:w-4
                   "
@@ -531,71 +487,50 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* ===================================================
-            BOTTOM
-        ==================================================== */}
-
+        {/* BOTTOM */}
         <div
           className="
             flex
             items-end
             justify-between
-
             gap-3
-
             border-t
             border-white/20
-
             pt-3
-
             sm:gap-4
             sm:pt-4
           "
         >
-          {/* =================================================
-              SCROLL
-          ================================================== */}
-
+          {/* SCROLL / EXPLORE */}
           <button
             type="button"
-            aria-label="Aşağı kaydır"
+            aria-label="Kategorileri keşfet"
+            onClick={handleExploreClick}
             className="
               group
-
               flex
               shrink-0
               items-center
-
               gap-3
-
               text-white/70
-
               transition-colors
               duration-300
-
               hover:text-white
             "
           >
             <span
               className="
                 flex
-
                 h-8
                 w-8
-
                 items-center
                 justify-center
-
                 border
                 border-white/30
-
                 bg-black/10
-
                 backdrop-blur-sm
-
                 transition-all
                 duration-300
-
                 group-hover:border-white/70
                 group-hover:bg-white/10
               "
@@ -606,7 +541,6 @@ export default function Hero() {
                 className="
                   transition-transform
                   duration-500
-
                   group-hover:translate-y-1
                 "
               />
@@ -615,15 +549,11 @@ export default function Hero() {
             <span
               className="
                 hidden
-
                 font-[family-name:var(--font-manrope)]
-
                 text-[8px]
                 font-semibold
                 uppercase
-
                 tracking-[0.16em]
-
                 sm:block
               "
             >
@@ -631,17 +561,12 @@ export default function Hero() {
             </span>
           </button>
 
-          {/* =================================================
-              META
-          ================================================== */}
-
+          {/* META */}
           <div
             className="
               flex
               items-center
-
               gap-3
-
               sm:gap-7
               lg:gap-10
             "
@@ -672,10 +597,7 @@ export default function Hero() {
   );
 }
 
-/* =========================================================
-   HERO META
-========================================================= */
-
+/* HERO META */
 function HeroMeta({
   number,
   title,
@@ -686,25 +608,18 @@ function HeroMeta({
       className="
         flex
         items-start
-
         gap-1.5
-
         sm:gap-3
       "
     >
       <span
         className="
           pt-[1px]
-
           font-[family-name:var(--font-manrope)]
-
           text-[6px]
           font-bold
-
           tracking-[0.12em]
-
           text-[var(--accent)]
-
           sm:text-[8px]
           sm:tracking-[0.14em]
         "
@@ -716,15 +631,11 @@ function HeroMeta({
         <p
           className="
             font-[family-name:var(--font-manrope)]
-
             text-[7px]
             font-semibold
             uppercase
-
             tracking-[0.07em]
-
             text-white
-
             sm:text-[9px]
             sm:tracking-[0.1em]
           "
@@ -735,12 +646,9 @@ function HeroMeta({
         <p
           className="
             mt-1
-
             hidden
-
             text-[8px]
             text-white/50
-
             lg:block
           "
         >

@@ -1,4 +1,8 @@
 import { Inter, Manrope } from "next/font/google";
+
+import AnnouncementBar from "@/components/layout/AnnouncementBar";
+import Header from "@/components/layout/Header";
+
 import "./globals.css";
 
 const inter = Inter({
@@ -35,7 +39,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="tr">
-      <body className={`${inter.variable} ${manrope.variable}`}>
+      <body
+        className={`${inter.variable} ${manrope.variable} min-w-0 overflow-x-clip`}
+      >
+        <div data-revora-sticky-header className="sticky top-0 z-50 w-full">
+          <AnnouncementBar />
+          <Header />
+        </div>
+
         {children}
       </body>
     </html>

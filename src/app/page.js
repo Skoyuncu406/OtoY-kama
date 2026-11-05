@@ -1,18 +1,15 @@
-import AnnouncementBar from "@/components/layout/AnnouncementBar";
-import Header from "@/components/layout/Header";
 import Hero from "@/components/home/Hero";
+import Categories from "@/components/home/Categories";
+import FeaturedProducts from "@/components/home/FeaturedProducts";
+import AllProductsCTA from "@/components/home/AllProductsCTA";
 
 export default function Home() {
   return (
-    <>
-      <div className="sticky top-0 z-50 w-full">
-        <AnnouncementBar />
-        <Header />
-      </div>
-
-      <main>
-        <Hero />
-      </main>
-    </>
+    <main className="w-full min-w-0 overflow-x-clip">
+      <Hero />
+      <Categories />
+      <FeaturedProducts />
+      <AllProductsCTA />
+    </main>
   );
 }

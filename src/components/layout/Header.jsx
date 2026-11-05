@@ -1,7 +1,9 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
   Menu,
@@ -15,14 +17,70 @@ import {
 
 const navigation = [
   { label: "Ürünler", href: "/urunler" },
-  { label: "Kategoriler", href: "/kategoriler" },
-  { label: "Markalar", href: "/markalar" },
-  { label: "Yeni Gelenler", href: "/yeni-gelenler" },
-  { label: "Çok Satanlar", href: "/cok-satanlar" },
+  { label: "Kategoriler", href: "/#kategoriler" },
+
+  {
+    label: "Yeni Gelenler",
+    href: "/urunler?koleksiyon=yeni-gelenler",
+  },
+  {
+    label: "Çok Satanlar",
+    href: "/urunler?koleksiyon=cok-satanlar",
+  },
 ];
 
+function isNormalClick(event) {
+  return (
+    event.button === 0 &&
+    !event.metaKey &&
+    !event.ctrlKey &&
+    !event.shiftKey &&
+    !event.altKey
+  );
+}
+
+function smoothScrollTo(top) {
+  window.scrollTo({
+    top,
+    behavior: window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches
+      ? "auto"
+      : "smooth",
+  });
+}
+
+function scrollToCategories() {
+  const section = document.getElementById("kategoriler");
+
+  if (!section) return false;
+
+  const header = document.querySelector(
+    "[data-revora-sticky-header]"
+  );
+
+  const headerHeight = header
+    ? header.getBoundingClientRect().height
+    : 0;
+
+  const sectionTop =
+    section.getBoundingClientRect().top +
+    window.scrollY;
+
+  smoothScrollTo(
+    Math.max(0, sectionTop - headerHeight)
+  );
+
+  return true;
+}
+
 export default function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const [mobileMenuOpen, setMobileMenuOpen] =
+    useState(false);
+
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -37,24 +95,85 @@ export default function Header() {
     });
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener(
+        "scroll",
+        handleScroll
+      );
     };
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+    const previousOverflow =
+      document.body.style.overflow;
+
+    document.body.style.overflow = mobileMenuOpen
+      ? "hidden"
+      : "";
 
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow =
+        previousOverflow;
     };
   }, [mobileMenuOpen]);
 
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  const handleLogoClick = (event) => {
+    if (!isNormalClick(event)) return;
+
+    setMobileMenuOpen(false);
+
+    if (pathname !== "/") {
+      return;
+    }
+
+    event.preventDefault();
+
+    // Hash'i kaldırırken Next.js history state'ini koru.
+    if (window.location.hash) {
+      window.history.replaceState(
+        window.history.state,
+        "",
+        "/"
+      );
+    }
+
+    smoothScrollTo(0);
+  };
+
+  const handleNavigationClick = (event, item) => {
+    if (!isNormalClick(event)) return;
+
+    setMobileMenuOpen(false);
+
+    if (item.href !== "/#kategoriler") {
+      return;
+    }
+
+    // Başka sayfadaysak Next.js ana sayfaya yönlendirir.
+    if (pathname !== "/") {
+      return;
+    }
+
+    // Ana sayfadaysak her seferinde manuel kaydır.
+    event.preventDefault();
+
+    const found = scrollToCategories();
+
+    if (found && window.location.hash !== "#kategoriler") {
+      window.history.replaceState(
+        window.history.state,
+        "",
+        "/#kategoriler"
+      );
+    }
+  };
+
   return (
     <>
-      {/* =====================================================
-          HEADER
-      ====================================================== */}
-
+      {/* HEADER */}
       <header
         className={`
           relative
@@ -64,7 +183,6 @@ export default function Header() {
           transition-all
           duration-500
           ease-[var(--ease-premium)]
-
           ${
             scrolled
               ? `
@@ -90,12 +208,12 @@ export default function Header() {
             "
           >
             {/* MOBILE MENU BUTTON */}
-
             <div className="flex items-center lg:hidden">
               <button
                 type="button"
                 aria-label="Menüyü aç"
                 aria-expanded={mobileMenuOpen}
+                aria-controls="revora-mobile-menu"
                 onClick={() => setMobileMenuOpen(true)}
                 className="
                   flex
@@ -113,19 +231,16 @@ export default function Header() {
             </div>
 
             {/* DESKTOP LOGO */}
-
             <div className="hidden items-center lg:flex">
-              <Logo />
+              <Logo onClick={handleLogoClick} />
             </div>
 
             {/* MOBILE LOGO */}
-
             <div className="flex justify-center lg:hidden">
-              <Logo />
+              <Logo onClick={handleLogoClick} />
             </div>
 
             {/* DESKTOP NAVIGATION */}
-
             <nav
               aria-label="Ana navigasyon"
               className="
@@ -149,19 +264,20 @@ export default function Header() {
                   <Link
                     key={item.label}
                     href={item.href}
+                    onClick={(event) =>
+                      handleNavigationClick(event, item)
+                    }
                     className="
                       group
                       relative
                       flex
                       h-full
                       items-center
-
                       font-[family-name:var(--font-manrope)]
                       text-[11px]
                       font-semibold
                       uppercase
                       tracking-[0.1em]
-
                       text-[var(--foreground)]
                     "
                   >
@@ -181,19 +297,14 @@ export default function Header() {
                         absolute
                         bottom-[18px]
                         left-0
-
                         h-px
                         w-full
-
                         origin-right
                         scale-x-0
-
                         bg-[var(--foreground)]
-
                         transition-transform
                         duration-500
                         ease-[var(--ease-premium)]
-
                         group-hover:origin-left
                         group-hover:scale-x-100
                       "
@@ -203,8 +314,7 @@ export default function Header() {
               </div>
             </nav>
 
-            {/* ACTIONS */}
-
+            {/* HEADER ACTIONS */}
             <div
               className="
                 flex
@@ -217,14 +327,24 @@ export default function Header() {
               <HeaderAction
                 label="Ara"
                 href="/arama"
-                icon={<Search size={19} strokeWidth={1.5} />}
+                icon={
+                  <Search
+                    size={19}
+                    strokeWidth={1.5}
+                  />
+                }
               />
 
               <div className="hidden sm:block">
                 <HeaderAction
                   label="Hesabım"
                   href="/hesabim"
-                  icon={<UserRound size={19} strokeWidth={1.5} />}
+                  icon={
+                    <UserRound
+                      size={19}
+                      strokeWidth={1.5}
+                    />
+                  }
                 />
               </div>
 
@@ -232,14 +352,24 @@ export default function Header() {
                 <HeaderAction
                   label="Favoriler"
                   href="/favoriler"
-                  icon={<Heart size={19} strokeWidth={1.5} />}
+                  icon={
+                    <Heart
+                      size={19}
+                      strokeWidth={1.5}
+                    />
+                  }
                 />
               </div>
 
               <HeaderAction
                 label="Sepet"
                 href="/sepet"
-                icon={<ShoppingBag size={19} strokeWidth={1.5} />}
+                icon={
+                  <ShoppingBag
+                    size={19}
+                    strokeWidth={1.5}
+                  />
+                }
                 count={0}
               />
             </div>
@@ -247,19 +377,16 @@ export default function Header() {
         </div>
       </header>
 
-      {/* =====================================================
-          MOBILE MENU
-      ====================================================== */}
-
+      {/* MOBILE MENU */}
       <div
+        id="revora-mobile-menu"
+        aria-hidden={!mobileMenuOpen}
         className={`
           fixed
           inset-0
           z-[100]
-
           transition-[visibility]
           duration-500
-
           ${
             mobileMenuOpen
               ? "visible"
@@ -268,24 +395,20 @@ export default function Header() {
         `}
       >
         {/* BACKDROP */}
-
         <button
           type="button"
           aria-label="Menüyü kapat"
+          tabIndex={mobileMenuOpen ? 0 : -1}
           onClick={() => setMobileMenuOpen(false)}
           className={`
             absolute
             inset-0
-
             h-full
             w-full
-
             bg-black/40
             backdrop-blur-[2px]
-
             transition-opacity
             duration-500
-
             ${
               mobileMenuOpen
                 ? "opacity-100"
@@ -295,26 +418,20 @@ export default function Header() {
         />
 
         {/* PANEL */}
-
         <div
           className={`
             absolute
             left-0
             top-0
-
             flex
             h-full
             w-[min(88%,420px)]
             flex-col
-
             bg-[var(--background)]
-
             shadow-[20px_0_60px_rgba(0,0,0,0.12)]
-
             transition-transform
             duration-700
             ease-[var(--ease-premium)]
-
             ${
               mobileMenuOpen
                 ? "translate-x-0"
@@ -323,7 +440,6 @@ export default function Header() {
           `}
         >
           {/* MOBILE MENU HEADER */}
-
           <div
             className="
               flex
@@ -331,19 +447,18 @@ export default function Header() {
               shrink-0
               items-center
               justify-between
-
               border-b
               border-[var(--border)]
-
               px-5
               sm:px-7
             "
           >
-            <Logo />
+            <Logo onClick={handleLogoClick} />
 
             <button
               type="button"
               aria-label="Menüyü kapat"
+              tabIndex={mobileMenuOpen ? 0 : -1}
               onClick={() => setMobileMenuOpen(false)}
               className="
                 flex
@@ -351,10 +466,8 @@ export default function Header() {
                 w-10
                 items-center
                 justify-end
-
                 transition-all
                 duration-500
-
                 hover:rotate-90
                 hover:opacity-60
               "
@@ -364,16 +477,13 @@ export default function Header() {
           </div>
 
           {/* MOBILE NAVIGATION */}
-
           <nav
             aria-label="Mobil navigasyon"
             className="
               flex-1
               overflow-y-auto
-
               px-5
               py-6
-
               sm:px-7
             "
           >
@@ -382,15 +492,16 @@ export default function Header() {
                 <Link
                   key={item.label}
                   href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
+                  tabIndex={mobileMenuOpen ? 0 : -1}
+                  onClick={(event) =>
+                    handleNavigationClick(event, item)
+                  }
                   className="
                     group
-
                     flex
                     min-h-[58px]
                     items-center
                     justify-between
-
                     border-b
                     border-[var(--border)]
                   "
@@ -399,12 +510,10 @@ export default function Header() {
                     <span
                       className="
                         w-5
-
                         font-[family-name:var(--font-manrope)]
                         text-[9px]
                         font-semibold
                         tracking-[0.12em]
-
                         text-[var(--muted)]
                       "
                     >
@@ -417,10 +526,8 @@ export default function Header() {
                         text-[15px]
                         font-semibold
                         tracking-[-0.02em]
-
                         transition-transform
                         duration-300
-
                         group-hover:translate-x-1
                       "
                     >
@@ -442,18 +549,15 @@ export default function Header() {
             </div>
 
             {/* ACCOUNT */}
-
             <div className="mt-9">
               <p
                 className="
                   mb-4
-
                   font-[family-name:var(--font-manrope)]
                   text-[9px]
                   font-bold
                   uppercase
                   tracking-[0.18em]
-
                   text-[var(--muted)]
                 "
               >
@@ -462,70 +566,72 @@ export default function Header() {
 
               <Link
                 href="/hesabim"
+                tabIndex={mobileMenuOpen ? 0 : -1}
                 onClick={() => setMobileMenuOpen(false)}
                 className="
                   flex
                   items-center
                   gap-3
                   py-2
-
                   text-sm
                   font-medium
-
                   transition-opacity
                   duration-300
-
                   hover:opacity-60
                 "
               >
-                <UserRound size={17} strokeWidth={1.5} />
-
+                <UserRound
+                  size={17}
+                  strokeWidth={1.5}
+                />
                 Giriş Yap / Üye Ol
               </Link>
 
               <Link
                 href="/favoriler"
+                tabIndex={mobileMenuOpen ? 0 : -1}
                 onClick={() => setMobileMenuOpen(false)}
                 className="
                   mt-2
-
                   flex
                   items-center
                   gap-3
                   py-2
-
                   text-sm
                   font-medium
-
                   transition-opacity
                   duration-300
-
                   hover:opacity-60
                 "
               >
-                <Heart size={17} strokeWidth={1.5} />
-
+                <Heart
+                  size={17}
+                  strokeWidth={1.5}
+                />
                 Favorilerim
               </Link>
             </div>
           </nav>
 
-          {/* FOOTER */}
-
+          {/* MOBILE MENU FOOTER */}
           <div
             className="
               shrink-0
-
               border-t
               border-[var(--border)]
-
               px-5
               py-5
-
               sm:px-7
             "
           >
-            <div className="flex items-center justify-between gap-4">
+            <div
+              className="
+                flex
+                items-center
+                justify-between
+                gap-4
+              "
+            >
               <p
                 className="
                   font-[family-name:var(--font-manrope)]
@@ -533,7 +639,6 @@ export default function Header() {
                   font-semibold
                   uppercase
                   tracking-[0.15em]
-
                   text-[var(--muted)]
                 "
               >
@@ -557,28 +662,23 @@ export default function Header() {
   );
 }
 
-/* =========================================================
-   LOGO
-========================================================= */
-
-function Logo() {
+/* LOGO */
+function Logo({ onClick }) {
   return (
     <Link
       href="/"
+      onClick={onClick}
       aria-label="REVORA Ana Sayfa"
       className="
         inline-flex
         items-center
         whitespace-nowrap
-
         font-[family-name:var(--font-manrope)]
         text-[20px]
         font-extrabold
         leading-none
         tracking-[0.19em]
-
         text-[var(--foreground)]
-
         sm:text-[22px]
       "
     >
@@ -589,13 +689,10 @@ function Logo() {
         className="
           ml-[3px]
           mt-[-12px]
-
           h-[5px]
           w-[5px]
-
           shrink-0
           rounded-full
-
           bg-[var(--accent)]
         "
       />
@@ -603,10 +700,7 @@ function Logo() {
   );
 }
 
-/* =========================================================
-   HEADER ACTION
-========================================================= */
-
+/* HEADER ACTION */
 function HeaderAction({
   label,
   href,
@@ -620,13 +714,11 @@ function HeaderAction({
       className="
         group
         relative
-
         flex
         h-10
         w-9
         items-center
         justify-center
-
         sm:w-10
       "
     >
@@ -635,7 +727,6 @@ function HeaderAction({
           transition-all
           duration-300
           ease-[var(--ease-premium)]
-
           group-hover:-translate-y-[1px]
           group-hover:opacity-60
         "
@@ -649,23 +740,18 @@ function HeaderAction({
             absolute
             right-0
             top-0
-
             flex
             h-4
             min-w-4
             items-center
             justify-center
-
             rounded-full
             bg-[var(--accent)]
-
             px-1
-
             font-[family-name:var(--font-manrope)]
             text-[8px]
             font-extrabold
             leading-none
-
             text-[var(--carbon)]
           "
         >
