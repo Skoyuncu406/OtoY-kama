@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+
 import {
   usePathname,
   useRouter,
@@ -14,6 +15,7 @@ import {
   UserRound,
   Heart,
   ShoppingBag,
+  Grid2X2,
 } from "lucide-react";
 
 const navigation = [
@@ -77,10 +79,44 @@ export default function Header() {
   const router = useRouter();
 
   const [scrolled, setScrolled] = useState(false);
+  const [categoriesActive, setCategoriesActive] =
+    useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 8);
+
+      if (pathname !== "/") {
+        setCategoriesActive(false);
+        return;
+      }
+
+      const section = document.getElementById("kategoriler");
+
+      if (!section) {
+        setCategoriesActive(false);
+        return;
+      }
+
+      const header = document.querySelector(
+        "[data-revora-sticky-header]"
+      );
+
+      const headerHeight = header
+        ? header.getBoundingClientRect().height
+        : 0;
+
+      const sectionTop =
+        section.getBoundingClientRect().top -
+        headerHeight;
+
+      const sectionBottom =
+        section.getBoundingClientRect().bottom -
+        headerHeight;
+
+      setCategoriesActive(
+        sectionTop <= 100 && sectionBottom > 100
+      );
     };
 
     handleScroll();
@@ -89,13 +125,20 @@ export default function Header() {
       passive: true,
     });
 
+    window.addEventListener("resize", handleScroll);
+
     return () => {
       window.removeEventListener(
         "scroll",
         handleScroll
       );
+
+      window.removeEventListener(
+        "resize",
+        handleScroll
+      );
     };
-  }, []);
+  }, [pathname]);
 
   const handleLogoClick = (event) => {
     if (!isNormalClick(event)) return;
@@ -123,7 +166,10 @@ export default function Header() {
 
     const found = scrollToCategories();
 
-    if (found && window.location.hash !== "#kategoriler") {
+    if (
+      found &&
+      window.location.hash !== "#kategoriler"
+    ) {
       window.history.replaceState(
         window.history.state,
         "",
@@ -131,6 +177,10 @@ export default function Header() {
       );
     }
   };
+
+  const productsActive =
+    pathname === "/urunler" ||
+    pathname.startsWith("/urunler/");
 
   return (
     <>
@@ -149,15 +199,15 @@ export default function Header() {
           ${
             scrolled
               ? `
-                border-[var(--border)]
-                bg-[rgba(244,243,239,0.95)]
-                shadow-[0_8px_30px_rgba(17,19,18,0.04)]
-                backdrop-blur-xl
-              `
+                  border-[var(--border)]
+                  bg-[rgba(244,243,239,0.95)]
+                  shadow-[0_8px_30px_rgba(17,19,18,0.04)]
+                  backdrop-blur-xl
+                `
               : `
-                border-transparent
-                bg-[var(--background)]
-              `
+                  border-transparent
+                  bg-[var(--background)]
+                `
           }
         `}
       >
@@ -279,7 +329,7 @@ export default function Header() {
           bottom-0
           z-[90]
           border-t
-          border-[var(--border)]
+          border-[#D8DBD7]
           bg-[rgba(244,243,239,0.97)]
           pb-[env(safe-area-inset-bottom)]
           shadow-[0_-8px_30px_rgba(17,19,18,0.04)]
@@ -287,59 +337,137 @@ export default function Header() {
           lg:hidden
         "
       >
-        <div className="w-full px-4 sm:px-6">
-          <div className="grid h-[58px] grid-cols-2 items-center">
-            <Link
-              href="/#kategoriler"
-              onClick={(event) =>
-                handleNavigationClick(
-                  event,
-                  navigation[1]
-                )
-              }
-              className="
-                flex
-                h-full
-                items-center
-                justify-start
-                font-[family-name:var(--font-manrope)]
-                text-[11px]
-                font-semibold
-                uppercase
-                tracking-[0.1em]
-                text-[var(--foreground)]
-                transition-opacity
-                duration-300
-                hover:opacity-60
-              "
-            >
-              Kategoriler
-            </Link>
+        <div className="relative grid h-[62px] w-full grid-cols-2">
+          {/* CENTER DIVIDER */}
+          <span
+            aria-hidden="true"
+            className="
+              pointer-events-none
+              absolute
+              left-1/2
+              top-1/2
+              h-7
+              w-px
+              -translate-x-1/2
+              -translate-y-1/2
+              bg-[#D8DBD7]
+            "
+          />
 
-            <Link
-              href="/urunler"
-              className="
-                flex
-                h-full
-                items-center
-                justify-end
-                font-[family-name:var(--font-manrope)]
-                text-[11px]
-                font-semibold
-                uppercase
-                tracking-[0.1em]
-                text-[var(--foreground)]
-                transition-opacity
-                duration-300
-                hover:opacity-60
-              "
-            >
-              Ürünler
-            </Link>
-          </div>
+          {/* CATEGORIES */}
+          <MobileNavigationLink
+            href="/#kategoriler"
+            label="Kategoriler"
+            active={categoriesActive}
+            onClick={(event) =>
+              handleNavigationClick(
+                event,
+                navigation[1]
+              )
+            }
+            icon={
+              <Grid2X2
+                size={17}
+                strokeWidth={1.6}
+              />
+            }
+          />
+
+          {/* PRODUCTS */}
+          <MobileNavigationLink
+            href="/urunler"
+            label="Ürünler"
+            active={productsActive}
+            icon={
+              <ShoppingBag
+                size={17}
+                strokeWidth={1.6}
+              />
+            }
+          />
         </div>
       </nav>
     </>
+  );
+}
+
+/* MOBILE NAVIGATION LINK */
+function MobileNavigationLink({
+  href,
+  label,
+  icon,
+  active = false,
+  onClick,
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      aria-current={active ? "page" : undefined}
+      className="
+        group
+        relative
+        flex
+        h-full
+        min-w-0
+        items-center
+        justify-center
+        px-2
+        font-[family-name:var(--font-manrope)]
+        transition-colors
+        duration-300
+        hover:bg-[#EAECE7]/60
+      "
+    >
+      <span
+        className={`
+          flex
+          items-center
+          justify-center
+          gap-2
+          text-[11px]
+          font-semibold
+          tracking-[0.035em]
+          transition-colors
+          duration-300
+          ${
+            active
+              ? "text-[#A61922]"
+              : "text-[#333733] group-hover:text-[#A61922]"
+          }
+        `}
+      >
+        <span className="flex shrink-0 items-center justify-center">
+          {icon}
+        </span>
+
+        <span className="whitespace-nowrap">
+          {label}
+        </span>
+      </span>
+
+      {/* ACTIVE UNDERLINE */}
+      <span
+        aria-hidden="true"
+        className={`
+          absolute
+          bottom-[8px]
+          left-1/2
+          h-[2px]
+          w-[28px]
+          -translate-x-1/2
+          rounded-full
+          bg-[#A61922]
+          transition-all
+          duration-300
+          ${
+            active
+              ? "scale-x-100 opacity-100"
+              : "scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-60"
+          }
+        `}
+      />
+    </Link>
   );
 }
 

@@ -57,7 +57,6 @@ export default function Hero() {
       behavior: reducedMotion ? "auto" : "smooth",
     });
 
-    // Hash'i güncelle, Next.js history state'ini koru.
     if (window.location.hash !== "#kategoriler") {
       window.history.replaceState(
         window.history.state,
@@ -119,7 +118,7 @@ export default function Hero() {
       {/* BACKGROUND IMAGE */}
       <Image
         src="/images/hero/revora-hero.jpg"
-        alt="Premium araç bakım ve detailing ürünleri"
+        alt="VICIX Car Care - Kırmızı Lamborghini Huracán ve araç bakım ürünleri"
         fill
         priority
         sizes="100vw"
@@ -161,7 +160,7 @@ export default function Hero() {
           absolute
           inset-0
           -z-20
-          bg-[linear-gradient(180deg,rgba(8,10,9,0.18)_0%,rgba(8,10,9,0.40)_38%,rgba(8,10,9,0.88)_100%)]
+          bg-[linear-gradient(180deg,rgba(8,10,9,0.42)_0%,rgba(8,10,9,0.18)_35%,rgba(8,10,9,0.12)_65%,rgba(8,10,9,0.75)_100%)]
           lg:hidden
         "
       />
@@ -260,12 +259,16 @@ export default function Hero() {
           </p>
         </div>
 
-        {/* CENTER CONTENT */}
+        {/* MAIN CONTENT */}
         <div
           className="
             flex
             min-h-0
-            items-center
+            items-start
+            pt-5
+            sm:pt-8
+            lg:items-center
+            lg:pt-0
           "
         >
           <div className="w-full max-w-[900px]">
@@ -294,11 +297,13 @@ export default function Hero() {
               className="
                 max-w-[900px]
                 font-[family-name:var(--font-manrope)]
-                text-[clamp(2.35rem,10vw,6.7rem)]
+                text-[clamp(2rem,8.5vw,6.7rem)]
                 font-semibold
-                leading-[0.9]
+                leading-[0.95]
                 tracking-[-0.06em]
                 text-white
+                sm:text-[clamp(2.35rem,8vw,6.7rem)]
+                lg:leading-[0.9]
               "
             >
               Kusursuzluk
@@ -401,7 +406,7 @@ export default function Hero() {
                 />
               </Link>
 
-              {/* SECONDARY CTA — CATEGORIES */}
+              {/* SECONDARY CTA */}
               <Link
                 href="/#kategoriler"
                 onClick={handleCategoriesClick}
