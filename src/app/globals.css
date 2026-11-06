@@ -697,3 +697,14 @@ select:focus {
     display: none !important;
   }
 }
+
+
+/* VICIX - MOBILE BOTTOM NAVIGATION */
+
+@media (max-width: 1023px) {
+  body {
+    padding-bottom: calc(
+      58px + env(safe-area-inset-bottom)
+    );
+  }
+}

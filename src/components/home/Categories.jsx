@@ -1,16 +1,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowUpRight, MoveRight } from "lucide-react";
-
+import { ArrowUpRight } from "lucide-react";
 
 const categories = [
   {
     number: "01",
-    title: "Yıkama & Ön Yıkama",
-    description: "Kusursuz temizliğin ilk adımı.",
-    image: "/images/categories/washing.jpg",
-    href: "/urunler?kategori=yikama-on-yikama",
+    title: "VICIX",
+    description: "VICIX Car Care ürün koleksiyonunu keşfedin.",
+    image: "/images/categories/vicix.jpg",
+    href: "/urunler?kategori=vicix",
   },
   {
     number: "02",
@@ -49,20 +48,19 @@ const categories = [
   },
 ];
 
-
 export default function Categories() {
   return (
     <section
       id="kategoriler"
-        className="
-    w-full
-    scroll-mt-[var(--site-header-height)]
-    overflow-hidden
-    bg-[#F4F3EF]
-    py-10
-    sm:py-10
-    lg:py-10
-  "
+      className="
+        w-full
+        scroll-mt-[var(--site-header-height)]
+        overflow-hidden
+        bg-[#F4F3EF]
+        py-10
+        sm:py-10
+        lg:py-10
+      "
     >
       <div className="revora-container">
         {/* SECTION HEADER */}
@@ -70,7 +68,7 @@ export default function Categories() {
           <div>
             <p className="mb-4 flex items-center gap-3 font-[family-name:var(--font-manrope)] text-[10px] font-bold uppercase tracking-[0.2em] text-[#626A64]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#8DCC27]" />
-              REVORA / KOLEKSİYONLAR
+              VICIX / KOLEKSİYONLAR
             </p>
 
             <h2 className="max-w-[700px] font-[family-name:var(--font-manrope)] text-[clamp(2.2rem,5vw,4.8rem)] font-semibold leading-[1.04] tracking-[-0.055em] text-[#111312]">
@@ -95,6 +93,7 @@ export default function Categories() {
               href={category.href}
               className="group block min-w-0"
             >
+              {/* CATEGORY IMAGE */}
               <div className="relative aspect-[4/5] overflow-hidden bg-[#242826] sm:aspect-[5/5] lg:aspect-[5/4]">
                 <Image
                   src={category.image}
@@ -104,17 +103,24 @@ export default function Categories() {
                   className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.055]"
                 />
 
+                {/* IMAGE OVERLAY */}
                 <div className="absolute inset-0 bg-black/10 transition-colors duration-500 group-hover:bg-black/25" />
 
+                {/* CATEGORY NUMBER */}
                 <span className="absolute left-3 top-3 font-[family-name:var(--font-manrope)] text-[10px] font-semibold tracking-[0.12em] text-white/90 sm:left-5 sm:top-5">
                   {category.number} / 06
                 </span>
 
+                {/* ARROW */}
                 <span className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center bg-white/95 text-[#111312] transition-all duration-500 group-hover:-translate-y-1 group-hover:bg-[#B7FF3C] sm:bottom-5 sm:right-5 sm:h-11 sm:w-11">
-                  <ArrowUpRight size={18} strokeWidth={1.7} />
+                  <ArrowUpRight
+                    size={18}
+                    strokeWidth={1.7}
+                  />
                 </span>
               </div>
 
+              {/* CATEGORY INFORMATION */}
               <div className="mt-4 border-b border-[#D8DBD7] pb-5 sm:mt-5">
                 <h3 className="font-[family-name:var(--font-manrope)] text-[13px] font-semibold tracking-[-0.025em] text-[#111312] sm:text-[18px] lg:text-[21px]">
                   {category.title}

@@ -2,30 +2,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import {
+  usePathname,
+  useRouter,
+} from "next/navigation";
 
 import {
-  Menu,
   Search,
   UserRound,
   Heart,
   ShoppingBag,
-  X,
-  ChevronRight,
 } from "lucide-react";
 
 const navigation = [
-  { label: "Ürünler", href: "/urunler" },
-  { label: "Kategoriler", href: "/#kategoriler" },
-
   {
-    label: "Yeni Gelenler",
-    href: "/urunler?koleksiyon=yeni-gelenler",
+    label: "Ürünler",
+    href: "/urunler",
   },
   {
-    label: "Çok Satanlar",
-    href: "/urunler?koleksiyon=cok-satanlar",
+    label: "Kategoriler",
+    href: "/#kategoriler",
   },
 ];
 
@@ -40,13 +38,13 @@ function isNormalClick(event) {
 }
 
 function smoothScrollTo(top) {
+  const reducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+
   window.scrollTo({
     top,
-    behavior: window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches
-      ? "auto"
-      : "smooth",
+    behavior: reducedMotion ? "auto" : "smooth",
   });
 }
 
@@ -78,9 +76,6 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [mobileMenuOpen, setMobileMenuOpen] =
-    useState(false);
-
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -102,36 +97,12 @@ export default function Header() {
     };
   }, []);
 
-  useEffect(() => {
-    const previousOverflow =
-      document.body.style.overflow;
-
-    document.body.style.overflow = mobileMenuOpen
-      ? "hidden"
-      : "";
-
-    return () => {
-      document.body.style.overflow =
-        previousOverflow;
-    };
-  }, [mobileMenuOpen]);
-
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
-
   const handleLogoClick = (event) => {
     if (!isNormalClick(event)) return;
-
-    setMobileMenuOpen(false);
-
-    if (pathname !== "/") {
-      return;
-    }
+    if (pathname !== "/") return;
 
     event.preventDefault();
 
-    // Hash'i kaldırırken Next.js history state'ini koru.
     if (window.location.hash) {
       window.history.replaceState(
         window.history.state,
@@ -145,19 +116,9 @@ export default function Header() {
 
   const handleNavigationClick = (event, item) => {
     if (!isNormalClick(event)) return;
+    if (item.href !== "/#kategoriler") return;
+    if (pathname !== "/") return;
 
-    setMobileMenuOpen(false);
-
-    if (item.href !== "/#kategoriler") {
-      return;
-    }
-
-    // Başka sayfadaysak Next.js ana sayfaya yönlendirir.
-    if (pathname !== "/") {
-      return;
-    }
-
-    // Ana sayfadaysak her seferinde manuel kaydır.
     event.preventDefault();
 
     const found = scrollToCategories();
@@ -173,12 +134,14 @@ export default function Header() {
 
   return (
     <>
-      {/* HEADER */}
+      {/* MAIN HEADER */}
       <header
         className={`
           relative
+          z-40
           h-[var(--header-height)]
           w-full
+          min-w-0
           border-b
           transition-all
           duration-500
@@ -198,175 +161,105 @@ export default function Header() {
           }
         `}
       >
-        <div className="revora-container h-full">
+        <div className="h-full w-full px-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div
             className="
+              relative
               grid
               h-full
-              grid-cols-[1fr_auto_1fr]
+              w-full
+              min-w-0
+              grid-cols-[minmax(0,1fr)_auto]
               items-center
+              gap-2
+              lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
+              lg:gap-5
             "
           >
-            {/* MOBILE MENU BUTTON */}
-            <div className="flex items-center lg:hidden">
-              <button
-                type="button"
-                aria-label="Menüyü aç"
-                aria-expanded={mobileMenuOpen}
-                aria-controls="revora-mobile-menu"
-                onClick={() => setMobileMenuOpen(true)}
-                className="
-                  flex
-                  h-10
-                  w-10
-                  items-center
-                  justify-start
-                  transition-opacity
-                  duration-300
-                  hover:opacity-60
-                "
-              >
-                <Menu size={21} strokeWidth={1.6} />
-              </button>
+            {/* LEFT - SEARCH */}
+            <div className="flex min-w-0 items-center justify-start">
+              <HeaderSearch router={router} />
             </div>
 
-            {/* DESKTOP LOGO */}
-            <div className="hidden items-center lg:flex">
-              <Logo onClick={handleLogoClick} />
-            </div>
-
-            {/* MOBILE LOGO */}
-            <div className="flex justify-center lg:hidden">
-              <Logo onClick={handleLogoClick} />
-            </div>
-
-            {/* DESKTOP NAVIGATION */}
+            {/* CENTER - DESKTOP NAVIGATION */}
             <nav
               aria-label="Ana navigasyon"
-              className="
-                hidden
-                h-full
-                items-center
-                justify-center
-                lg:flex
-              "
+              className="hidden h-full items-center justify-center lg:flex"
             >
-              <div
-                className="
-                  flex
-                  h-full
-                  items-center
-                  gap-7
-                  xl:gap-9
-                "
-              >
-                {navigation.map((item) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={(event) =>
-                      handleNavigationClick(event, item)
-                    }
-                    className="
-                      group
-                      relative
-                      flex
-                      h-full
-                      items-center
-                      font-[family-name:var(--font-manrope)]
-                      text-[11px]
-                      font-semibold
-                      uppercase
-                      tracking-[0.1em]
-                      text-[var(--foreground)]
-                    "
-                  >
-                    <span
-                      className="
-                        transition-opacity
-                        duration-300
-                        group-hover:opacity-60
-                      "
-                    >
-                      {item.label}
-                    </span>
+              <div className="flex h-full items-center gap-7 xl:gap-10">
+                <NavigationLink
+                  item={navigation[0]}
+                  onClick={handleNavigationClick}
+                />
 
-                    <span
-                      aria-hidden="true"
-                      className="
-                        absolute
-                        bottom-[18px]
-                        left-0
-                        h-px
-                        w-full
-                        origin-right
-                        scale-x-0
-                        bg-[var(--foreground)]
-                        transition-transform
-                        duration-500
-                        ease-[var(--ease-premium)]
-                        group-hover:origin-left
-                        group-hover:scale-x-100
-                      "
-                    />
-                  </Link>
-                ))}
+                <Logo onClick={handleLogoClick} />
+
+                <NavigationLink
+                  item={navigation[1]}
+                  onClick={handleNavigationClick}
+                />
               </div>
             </nav>
 
-            {/* HEADER ACTIONS */}
+            {/* CENTER - MOBILE LOGO */}
+            <div
+              className="
+                pointer-events-none
+                absolute
+                inset-y-0
+                left-1/2
+                flex
+                -translate-x-1/2
+                items-center
+                justify-center
+                lg:hidden
+              "
+            >
+              <div className="pointer-events-auto">
+                <Logo onClick={handleLogoClick} />
+              </div>
+            </div>
+
+            {/* RIGHT - USER / FAVORITES / CART */}
             <div
               className="
                 flex
+                min-w-0
                 items-center
                 justify-end
-                gap-1
-                sm:gap-2
+                gap-0
+                sm:gap-1
+                lg:gap-2
               "
             >
               <HeaderAction
-                label="Ara"
-                href="/arama"
+                label="Hesabım"
+                href="/hesabim"
                 icon={
-                  <Search
-                    size={19}
+                  <UserRound
+                    size={18}
                     strokeWidth={1.5}
                   />
                 }
               />
 
-              <div className="hidden sm:block">
-                <HeaderAction
-                  label="Hesabım"
-                  href="/hesabim"
-                  icon={
-                    <UserRound
-                      size={19}
-                      strokeWidth={1.5}
-                    />
-                  }
-                />
-              </div>
-
-              <div className="hidden sm:block">
-                <HeaderAction
-                  label="Favoriler"
-                  href="/favoriler"
-                  icon={
-                    <Heart
-                      size={19}
-                      strokeWidth={1.5}
-                    />
-                  }
-                />
-              </div>
+              <HeaderAction
+                label="Favoriler"
+                href="/favoriler"
+                icon={
+                  <Heart
+                    size={18}
+                    strokeWidth={1.5}
+                  />
+                }
+              />
 
               <HeaderAction
                 label="Sepet"
                 href="/sepet"
                 icon={
                   <ShoppingBag
-                    size={19}
+                    size={18}
                     strokeWidth={1.5}
                   />
                 }
@@ -377,323 +270,260 @@ export default function Header() {
         </div>
       </header>
 
-      {/* MOBILE MENU */}
-      <div
-        id="revora-mobile-menu"
-        aria-hidden={!mobileMenuOpen}
-        className={`
+      {/* MOBILE FIXED BOTTOM NAVIGATION */}
+      <nav
+        aria-label="Mobil hızlı navigasyon"
+        className="
           fixed
-          inset-0
-          z-[100]
-          transition-[visibility]
-          duration-500
-          ${
-            mobileMenuOpen
-              ? "visible"
-              : "invisible delay-500"
-          }
-        `}
+          inset-x-0
+          bottom-0
+          z-[90]
+          border-t
+          border-[var(--border)]
+          bg-[rgba(244,243,239,0.97)]
+          pb-[env(safe-area-inset-bottom)]
+          shadow-[0_-8px_30px_rgba(17,19,18,0.04)]
+          backdrop-blur-xl
+          lg:hidden
+        "
       >
-        {/* BACKDROP */}
-        <button
-          type="button"
-          aria-label="Menüyü kapat"
-          tabIndex={mobileMenuOpen ? 0 : -1}
-          onClick={() => setMobileMenuOpen(false)}
-          className={`
-            absolute
-            inset-0
-            h-full
-            w-full
-            bg-black/40
-            backdrop-blur-[2px]
-            transition-opacity
-            duration-500
-            ${
-              mobileMenuOpen
-                ? "opacity-100"
-                : "opacity-0"
-            }
-          `}
-        />
-
-        {/* PANEL */}
-        <div
-          className={`
-            absolute
-            left-0
-            top-0
-            flex
-            h-full
-            w-[min(88%,420px)]
-            flex-col
-            bg-[var(--background)]
-            shadow-[20px_0_60px_rgba(0,0,0,0.12)]
-            transition-transform
-            duration-700
-            ease-[var(--ease-premium)]
-            ${
-              mobileMenuOpen
-                ? "translate-x-0"
-                : "-translate-x-full"
-            }
-          `}
-        >
-          {/* MOBILE MENU HEADER */}
-          <div
-            className="
-              flex
-              h-[var(--header-height)]
-              shrink-0
-              items-center
-              justify-between
-              border-b
-              border-[var(--border)]
-              px-5
-              sm:px-7
-            "
-          >
-            <Logo onClick={handleLogoClick} />
-
-            <button
-              type="button"
-              aria-label="Menüyü kapat"
-              tabIndex={mobileMenuOpen ? 0 : -1}
-              onClick={() => setMobileMenuOpen(false)}
+        <div className="w-full px-4 sm:px-6">
+          <div className="grid h-[58px] grid-cols-2 items-center">
+            <Link
+              href="/#kategoriler"
+              onClick={(event) =>
+                handleNavigationClick(
+                  event,
+                  navigation[1]
+                )
+              }
               className="
                 flex
-                h-10
-                w-10
+                h-full
                 items-center
-                justify-end
-                transition-all
-                duration-500
-                hover:rotate-90
+                justify-start
+                font-[family-name:var(--font-manrope)]
+                text-[11px]
+                font-semibold
+                uppercase
+                tracking-[0.1em]
+                text-[var(--foreground)]
+                transition-opacity
+                duration-300
                 hover:opacity-60
               "
             >
-              <X size={21} strokeWidth={1.5} />
-            </button>
-          </div>
+              Kategoriler
+            </Link>
 
-          {/* MOBILE NAVIGATION */}
-          <nav
-            aria-label="Mobil navigasyon"
-            className="
-              flex-1
-              overflow-y-auto
-              px-5
-              py-6
-              sm:px-7
-            "
-          >
-            <div>
-              {navigation.map((item, index) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  tabIndex={mobileMenuOpen ? 0 : -1}
-                  onClick={(event) =>
-                    handleNavigationClick(event, item)
-                  }
-                  className="
-                    group
-                    flex
-                    min-h-[58px]
-                    items-center
-                    justify-between
-                    border-b
-                    border-[var(--border)]
-                  "
-                >
-                  <div className="flex items-center gap-4">
-                    <span
-                      className="
-                        w-5
-                        font-[family-name:var(--font-manrope)]
-                        text-[9px]
-                        font-semibold
-                        tracking-[0.12em]
-                        text-[var(--muted)]
-                      "
-                    >
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-
-                    <span
-                      className="
-                        font-[family-name:var(--font-manrope)]
-                        text-[15px]
-                        font-semibold
-                        tracking-[-0.02em]
-                        transition-transform
-                        duration-300
-                        group-hover:translate-x-1
-                      "
-                    >
-                      {item.label}
-                    </span>
-                  </div>
-
-                  <ChevronRight
-                    size={16}
-                    strokeWidth={1.5}
-                    className="
-                      transition-transform
-                      duration-300
-                      group-hover:translate-x-1
-                    "
-                  />
-                </Link>
-              ))}
-            </div>
-
-            {/* ACCOUNT */}
-            <div className="mt-9">
-              <p
-                className="
-                  mb-4
-                  font-[family-name:var(--font-manrope)]
-                  text-[9px]
-                  font-bold
-                  uppercase
-                  tracking-[0.18em]
-                  text-[var(--muted)]
-                "
-              >
-                Hesabım
-              </p>
-
-              <Link
-                href="/hesabim"
-                tabIndex={mobileMenuOpen ? 0 : -1}
-                onClick={() => setMobileMenuOpen(false)}
-                className="
-                  flex
-                  items-center
-                  gap-3
-                  py-2
-                  text-sm
-                  font-medium
-                  transition-opacity
-                  duration-300
-                  hover:opacity-60
-                "
-              >
-                <UserRound
-                  size={17}
-                  strokeWidth={1.5}
-                />
-                Giriş Yap / Üye Ol
-              </Link>
-
-              <Link
-                href="/favoriler"
-                tabIndex={mobileMenuOpen ? 0 : -1}
-                onClick={() => setMobileMenuOpen(false)}
-                className="
-                  mt-2
-                  flex
-                  items-center
-                  gap-3
-                  py-2
-                  text-sm
-                  font-medium
-                  transition-opacity
-                  duration-300
-                  hover:opacity-60
-                "
-              >
-                <Heart
-                  size={17}
-                  strokeWidth={1.5}
-                />
-                Favorilerim
-              </Link>
-            </div>
-          </nav>
-
-          {/* MOBILE MENU FOOTER */}
-          <div
-            className="
-              shrink-0
-              border-t
-              border-[var(--border)]
-              px-5
-              py-5
-              sm:px-7
-            "
-          >
-            <div
+            <Link
+              href="/urunler"
               className="
                 flex
+                h-full
                 items-center
-                justify-between
-                gap-4
+                justify-end
+                font-[family-name:var(--font-manrope)]
+                text-[11px]
+                font-semibold
+                uppercase
+                tracking-[0.1em]
+                text-[var(--foreground)]
+                transition-opacity
+                duration-300
+                hover:opacity-60
               "
             >
-              <p
-                className="
-                  font-[family-name:var(--font-manrope)]
-                  text-[9px]
-                  font-semibold
-                  uppercase
-                  tracking-[0.15em]
-                  text-[var(--muted)]
-                "
-              >
-                Premium Car Care & Detailing
-              </p>
-
-              <span
-                className="
-                  h-[6px]
-                  w-[6px]
-                  shrink-0
-                  rounded-full
-                  bg-[var(--accent)]
-                "
-              />
-            </div>
+              Ürünler
+            </Link>
           </div>
         </div>
-      </div>
+      </nav>
     </>
   );
 }
 
-/* LOGO */
+/* PREMIUM SEARCH */
+function HeaderSearch({ router }) {
+  const [query, setQuery] = useState("");
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    const searchValue = query.trim();
+
+    if (!searchValue) return;
+
+    router.push(
+      `/arama?q=${encodeURIComponent(searchValue)}`
+    );
+  };
+
+  return (
+    <form
+      role="search"
+      onSubmit={handleSubmit}
+      className="
+        group
+        flex
+        h-10
+        w-full
+        min-w-0
+        max-w-[100px]
+        items-center
+        gap-1
+        border-b
+        border-[#C7CCC5]
+        transition-colors
+        duration-300
+        focus-within:border-[#111312]
+        min-[380px]:max-w-[125px]
+        sm:max-w-[190px]
+        sm:gap-2
+        lg:max-w-[240px]
+      "
+    >
+      <button
+        type="submit"
+        aria-label="Ürün ara"
+        className="
+          flex
+          h-9
+          w-5
+          shrink-0
+          items-center
+          justify-start
+          text-[#111312]
+          transition-opacity
+          duration-300
+          hover:opacity-60
+          sm:w-6
+        "
+      >
+        <Search
+          size={17}
+          strokeWidth={1.6}
+        />
+      </button>
+
+      <input
+        type="search"
+        name="q"
+        value={query}
+        onChange={(event) =>
+          setQuery(event.target.value)
+        }
+        placeholder="Ürün ara..."
+        aria-label="Ürün ara"
+        autoComplete="off"
+        enterKeyHint="search"
+        className="
+          h-full
+          w-full
+          min-w-0
+          border-0
+          bg-transparent
+          p-0
+          font-[family-name:var(--font-manrope)]
+          text-[10px]
+          font-medium
+          text-[#111312]
+          outline-none
+          ring-0
+          placeholder:text-[#9AA19A]
+          focus:border-0
+          focus:bg-transparent
+          focus:outline-none
+          focus:ring-0
+          sm:text-[12px]
+        "
+      />
+    </form>
+  );
+}
+
+/* DESKTOP NAVIGATION LINK */
+function NavigationLink({ item, onClick }) {
+  return (
+    <Link
+      href={item.href}
+      onClick={(event) => onClick(event, item)}
+      className="
+        group
+        relative
+        flex
+        h-full
+        shrink-0
+        items-center
+        font-[family-name:var(--font-manrope)]
+        text-[11px]
+        font-semibold
+        uppercase
+        tracking-[0.1em]
+        text-[var(--foreground)]
+      "
+    >
+      <span className="transition-opacity duration-300 group-hover:opacity-60">
+        {item.label}
+      </span>
+
+      <span
+        aria-hidden="true"
+        className="
+          absolute
+          bottom-[18px]
+          left-0
+          h-px
+          w-full
+          origin-right
+          scale-x-0
+          bg-[var(--foreground)]
+          transition-transform
+          duration-500
+          ease-[var(--ease-premium)]
+          group-hover:origin-left
+          group-hover:scale-x-100
+        "
+      />
+    </Link>
+  );
+}
+
+/* VICIX LOGO */
 function Logo({ onClick }) {
   return (
     <Link
       href="/"
       onClick={onClick}
-      aria-label="REVORA Ana Sayfa"
+      aria-label="VICIX Ana Sayfa"
       className="
+        group
         inline-flex
+        h-[var(--header-height)]
+        shrink-0
         items-center
-        whitespace-nowrap
-        font-[family-name:var(--font-manrope)]
-        text-[20px]
-        font-extrabold
-        leading-none
-        tracking-[0.19em]
-        text-[var(--foreground)]
-        sm:text-[22px]
+        justify-center
       "
     >
-      REVORA
-
-      <span
-        aria-hidden="true"
+      <Image
+        src="/images/vicix-logo.png"
+        alt="VICIX Car Care"
+        width={160}
+        height={160}
+        priority
+        sizes="(max-width: 639px) 55px, (max-width: 1023px) 62px, 68px"
         className="
-          ml-[3px]
-          mt-[-12px]
-          h-[5px]
-          w-[5px]
-          shrink-0
-          rounded-full
-          bg-[var(--accent)]
+          h-[55px]
+          w-[55px]
+          object-contain
+          transition-transform
+          duration-500
+          ease-[var(--ease-premium)]
+          group-hover:scale-[1.04]
+          sm:h-[62px]
+          sm:w-[62px]
+          lg:h-[68px]
+          lg:w-[68px]
         "
       />
     </Link>
@@ -711,28 +541,24 @@ function HeaderAction({
     <Link
       href={href}
       aria-label={label}
+      title={label}
       className="
         group
         relative
         flex
         h-10
-        w-9
+        w-8
+        shrink-0
         items-center
         justify-center
+        text-[var(--foreground)]
+        transition-opacity
+        duration-300
+        hover:opacity-60
         sm:w-10
       "
     >
-      <span
-        className="
-          transition-all
-          duration-300
-          ease-[var(--ease-premium)]
-          group-hover:-translate-y-[1px]
-          group-hover:opacity-60
-        "
-      >
-        {icon}
-      </span>
+      {icon}
 
       {count > 0 && (
         <span

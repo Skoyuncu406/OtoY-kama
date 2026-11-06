@@ -29,6 +29,11 @@ export const productCategories = [
     title: "Seramik & Koruma",
     image: "/images/categories/ceramic.jpg",
   },
+  {
+    slug: "vicix",
+    title: "VICIX",
+    image: "/images/categories/vicix.jpg",
+  },
 ];
 
 // Geçici demo ürünler.
@@ -106,5 +111,43 @@ export const products = [
     image: "/images/categories/ceramic.jpg",
     isNew: true,
     isBestSeller: true,
+  },
+
+  {
+    id: 9,
+    name: "VICIX Oto Parfümü",
+    category: "vicix",
+    price: 299,
+    image: "/images/products/vicix-parfum-01.jpg",
+    images: ["/images/products/vicix-parfum-01.jpg"],
+    isNew: true,
+    isBestSeller: false,
+  },
+  {
+    id: 10,
+    name: "VICIX Oto Yıkama Seti",
+    category: "vicix",
+    price: 1299,
+    image: "/images/products/vicix-yikama-seti-01.jpg",
+    images: [
+      "/images/products/vicix-yikama-seti-01.jpg",
+      "/images/products/vicix-yikama-seti-02.jpg",
+    ],
+    isNew: true,
+    isBestSeller: false,
+  },
+  {
+    id: 11,
+    name: "VICIX Lastik Parlatıcı",
+    category: "vicix",
+    price: 449,
+    image: "/images/products/vicix-lastik-parlatici-01.jpg",
+    images: [
+      "/images/products/vicix-lastik-parlatici-01.jpg",
+      "/images/products/vicix-lastik-parlatici-02.jpg",
+      "/images/products/vicix-lastik-parlatici-03.jpg",
+    ],
+    isNew: true,
+    isBestSeller: false,
   },
 ];

@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   ArrowUpRight,
   ChevronDown,
@@ -189,7 +190,7 @@ export default function ProductsCatalog() {
             <div className="min-w-0">
               <p className="mb-5 flex items-center gap-3 font-[family-name:var(--font-manrope)] text-[10px] font-bold uppercase tracking-[0.2em] text-[#69716A]">
                 <span className="h-[6px] w-[6px] rounded-full bg-[#8DCC27]" />
-                REVORA / KOLEKSİYON
+                VICIX / KOLEKSİYON
               </p>
 
               <h1 className="max-w-[900px] font-[family-name:var(--font-manrope)] text-[clamp(2.5rem,6vw,5.5rem)] font-semibold leading-[1.04] tracking-[-0.06em]">
@@ -212,7 +213,7 @@ export default function ProductsCatalog() {
             <div className="sticky top-[calc(var(--site-header-height,100px)+16px)] max-h-[calc(100vh-var(--site-header-height,100px)-32px)] overflow-y-auto py-10 pr-7 xl:pr-9">
               <div className="mb-10">
                 <p className="mb-2 font-[family-name:var(--font-manrope)] text-[10px] font-bold uppercase tracking-[0.2em] text-[#858B85]">
-                  REVORA / SHOP
+                  VICIX / SHOP
                 </p>
 
                 <h2 className="font-[family-name:var(--font-manrope)] text-[23px] font-semibold tracking-[-0.05em]">
@@ -378,7 +379,7 @@ export default function ProductsCatalog() {
           <div className="flex items-center justify-between border-b border-[#D8DBD7] px-6 py-6">
             <div>
               <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-[#858B85]">
-                REVORA / SHOP
+                VICIX / SHOP
               </p>
               <h2 className="font-[family-name:var(--font-manrope)] text-xl font-semibold">
                 Filtreler
@@ -455,12 +456,12 @@ function FilterContent({
 
       <div className="mt-10 border-t border-[#D8DBD7] pt-6">
         <p className="font-[family-name:var(--font-manrope)] text-[10px] font-bold uppercase tracking-[0.12em] text-[#858B85]">
-          REVORA DETAILING
+          VICIX CAR CARE
         </p>
 
         <p className="mt-3 text-[12px] leading-6 text-[#69716A]">
           Her yüzeyde profesyonel bakım.
-          Her detayda REVORA kalitesi.
+          Her detayda VICIX kalitesi.
         </p>
       </div>
     </nav>
@@ -539,6 +540,11 @@ function ProductItem({ product }) {
 
   return (
     <article className="group min-w-0">
+      <Link
+        href={`/urunler/${product.id}`}
+        aria-label={`${product.name} ürün detayını görüntüle`}
+        className="block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#111312]"
+      >
       <div className="relative aspect-[4/5] overflow-hidden bg-[#E6E8E3]">
         <Image
           src={product.image}
@@ -583,6 +589,7 @@ function ProductItem({ product }) {
           <ArrowUpRight size={16} strokeWidth={1.6} />
         </span>
       </div>
+      </Link>
     </article>
   );
 }
