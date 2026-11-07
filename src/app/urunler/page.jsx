@@ -1,14 +1,27 @@
 
 import { Suspense } from "react";
+
 import ProductsCatalog from "@/components/products/ProductsCatalog";
 
+import {
+  getStoreCategories,
+  getStoreProducts,
+} from "@/lib/store-data";
+
+export const dynamic = "force-dynamic";
+
 export const metadata = {
-  title: "Ürünler",
+  title: "Ürünler | VICIX Car Care",
   description:
-    "REVORA profesyonel araç bakım, detailing, yıkama, polisaj ve seramik koruma ürünlerini keşfedin.",
+    "VICIX Car Care profesyonel araç bakım, detailing, yıkama, polisaj ve seramik koruma ürünlerini keşfedin.",
 };
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const [categories, products] = await Promise.all([
+    getStoreCategories(),
+    getStoreProducts(),
+  ]);
+
   return (
     <Suspense
       fallback={
@@ -30,7 +43,10 @@ export default function ProductsPage() {
         </main>
       }
     >
-      <ProductsCatalog />
+      <ProductsCatalog
+        products={products}
+        categories={categories}
+      />
     </Suspense>
   );
 }

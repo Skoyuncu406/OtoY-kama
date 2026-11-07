@@ -17,10 +17,6 @@ import {
   useSearchParams,
 } from "next/navigation";
 
-import {
-  products,
-  productCategories,
-} from "@/data/products";
 
 const collections = [
   { label: "Tüm Ürünler", value: "all" },
@@ -34,7 +30,7 @@ const formatPrice = new Intl.NumberFormat("tr-TR", {
   maximumFractionDigits: 0,
 });
 
-export default function ProductsCatalog() {
+export default function ProductsCatalog({ products = [], categories = [] }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -53,7 +49,7 @@ export default function ProductsCatalog() {
   const categoryParam = searchParams.get("kategori");
   const collectionParam = searchParams.get("koleksiyon");
 
-  const activeCategory = productCategories.find(
+  const activeCategory = categories.find(
     (item) => item.slug === categoryParam
   );
 
@@ -97,7 +93,7 @@ export default function ProductsCatalog() {
     }
 
     return result;
-  }, [activeCategory, collectionParam, sort]);
+  }, [products, activeCategory?.slug, collectionParam, sort]);
 
   const getCount = (type, value) => {
     if (type === "category") {
@@ -179,6 +175,7 @@ export default function ProductsCatalog() {
     isCollectionActive,
     changeFilter,
     getCount,
+    categories,
   };
 
   return (
@@ -421,6 +418,7 @@ function FilterContent({
   isCollectionActive,
   changeFilter,
   getCount,
+  categories,
 }) {
   return (
     <nav aria-label="Ürün filtreleri">
@@ -441,7 +439,7 @@ function FilterContent({
       <div className="my-9 border-t border-[#D8DBD7]" />
 
       <FilterGroup title="Kategoriler" number="02">
-        {productCategories.map((item) => (
+        {categories.map((item) => (
           <FilterOption
             key={item.slug}
             label={item.title}
@@ -534,9 +532,6 @@ function FilterOption({
 
 /* PRODUCT ITEM */
 function ProductItem({ product }) {
-  const category = productCategories.find(
-    (item) => item.slug === product.category
-  );
 
   return (
     <article className="group min-w-0">
@@ -546,13 +541,17 @@ function ProductItem({ product }) {
         className="block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#111312]"
       >
       <div className="relative aspect-[4/5] overflow-hidden bg-[#E6E8E3]">
-        <Image
-          src={product.image}
-          alt={product.name}
-          fill
-          sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, (max-width: 1279px) 40vw, 25vw"
-          className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.045]"
-        />
+        {product.image ? (
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, (max-width: 1279px) 40vw, 25vw"
+            className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.045]"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-xs text-[#858B85]">Görsel hazırlanıyor</div>
+        )}
 
         {product.isNew && (
           <span className="absolute left-3 top-3 bg-[#B7FF3C] px-2.5 py-1.5 font-[family-name:var(--font-manrope)] text-[9px] font-bold uppercase tracking-[0.1em] text-[#111312]">
@@ -570,7 +569,7 @@ function ProductItem({ product }) {
       <div className="mt-4 flex items-start justify-between gap-2 border-b border-[#D8DBD7] pb-5 sm:mt-5">
         <div className="min-w-0">
           <p className="font-[family-name:var(--font-manrope)] text-[9px] font-semibold uppercase tracking-[0.12em] text-[#858B85]">
-            {category?.title}
+            {product.categoryName || product.category}
           </p>
 
           <h3 className="mt-2 font-[family-name:var(--font-manrope)] text-[12px] font-semibold leading-5 tracking-[-0.02em] sm:text-[15px]">
@@ -578,6 +577,9 @@ function ProductItem({ product }) {
           </h3>
 
           <p className="mt-3 font-[family-name:var(--font-manrope)] text-[12px] font-bold sm:text-[15px]">
+            {product.salePrice != null && product.salePrice < product.originalPrice && (
+              <span className="mr-2 text-[11px] font-normal text-[#858B85] line-through">{formatPrice.format(product.originalPrice)}</span>
+            )}
             {formatPrice.format(product.price)}
           </p>
         </div>

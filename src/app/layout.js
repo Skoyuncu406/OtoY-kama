@@ -38,7 +38,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="tr">
+    <html lang="tr" data-scroll-behavior="smooth">
       <body
         className={`${inter.variable} ${manrope.variable} min-w-0 overflow-x-clip`}
       >
