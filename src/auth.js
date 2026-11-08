@@ -14,11 +14,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 
   pages: {
-    signIn: "/admin/login",
+    signIn: "/giris-yap",
   },
 
   providers: [
     Credentials({
+      id: "credentials",
       name: "VICIX Yönetici Girişi",
 
       credentials: {
@@ -59,6 +60,50 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
       },
     }),
+
+    Credentials({
+      id: "customer-credentials",
+      name: "VICIX Müşteri Girişi",
+
+      credentials: {
+        username: { label: "Kullanıcı Adı", type: "text" },
+        password: { label: "Şifre", type: "password" },
+      },
+
+      async authorize(credentials) {
+        const parsed = z
+          .object({
+            username: z.string().trim().min(1).max(50),
+            password: z.string().min(1).max(1024),
+          })
+          .safeParse(credentials);
+
+        if (!parsed.success) return null;
+
+        const username = parsed.data.username.toLowerCase();
+
+        const customer = await prisma.customer.findUnique({
+          where: { username },
+        });
+
+        if (!customer || !customer.isActive) return null;
+
+        const validPassword = await verifyPassword(
+          parsed.data.password,
+          customer.passwordHash,
+        );
+
+        if (!validPassword) return null;
+
+        return {
+          id: customer.id,
+          name: customer.username,
+          email: customer.email,
+          role: "customer",
+          sessionVersion: customer.sessionVersion,
+        };
+      },
+    }),
   ],
 
   callbacks: {
@@ -66,6 +111,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = user.role;
+
+        if (user.role === "customer") {
+          token.sessionVersion = user.sessionVersion;
+        }
+      }
+
+      if (token.role === "customer" && token.id) {
+        const customer = await prisma.customer.findUnique({
+          where: { id: token.id },
+          select: {
+            username: true,
+            email: true,
+            isActive: true,
+            sessionVersion: true,
+          },
+        });
+
+        if (!customer || !customer.isActive) {
+          return null;
+        }
+
+        if (token.sessionVersion !== customer.sessionVersion) {
+          return null;
+        }
+
+        token.name = customer.username;
+        token.email = customer.email;
       }
 
       return token;
@@ -75,6 +147,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.name = token.name;
+        session.user.email = token.email;
       }
 
       return session;

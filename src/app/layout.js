@@ -3,6 +3,9 @@ import { Inter, Manrope } from "next/font/google";
 import AnnouncementBar from "@/components/layout/AnnouncementBar";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+
+import { CartProvider } from "@/context/CartContext";
+
 import "./globals.css";
 
 const inter = Inter({
@@ -19,12 +22,14 @@ const manrope = Manrope({
 
 export const metadata = {
   title: {
-    default: "REVORA | Premium Oto Bakım & Detailing",
-    template: "%s | REVORA",
+    default: "VICIX | Premium Oto Bakım & Detailing",
+    template: "%s | VICIX",
   },
   description:
-    "Profesyonel oto bakım, detailing, yıkama, polisaj ve araç koruma ürünleri. REVORA ile aracınıza hak ettiği bakımı sunun.",
+    "Profesyonel oto bakım, detailing, yıkama, polisaj ve araç koruma ürünleri. VICIX ile aracınıza hak ettiği bakımı sunun.",
   keywords: [
+    "VICIX",
+    "VICIX Car Care",
     "oto bakım",
     "detailing",
     "araç bakım ürünleri",
@@ -32,7 +37,6 @@ export const metadata = {
     "pasta cila",
     "seramik kaplama",
     "araç temizliği",
-    "REVORA",
   ],
 };
 
@@ -42,13 +46,16 @@ export default function RootLayout({ children }) {
       <body
         className={`${inter.variable} ${manrope.variable} min-w-0 overflow-x-clip`}
       >
-        <div data-revora-sticky-header className="sticky top-0 z-50 w-full">
-          <AnnouncementBar />
-          <Header />
-        </div>
+        <CartProvider>
+          <div data-revora-sticky-header className="sticky top-0 z-50 w-full">
+            <AnnouncementBar />
+            <Header />
+          </div>
 
-        {children}
-        <Footer />
+          {children}
+
+          <Footer />
+        </CartProvider>
       </body>
     </html>
   );

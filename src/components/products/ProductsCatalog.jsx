@@ -10,12 +10,18 @@ import {
   SlidersHorizontal,
   X,
   Package,
+  ShoppingBag,
+  Heart,
+  LoaderCircle,
+  Check,
 } from "lucide-react";
 import {
   usePathname,
   useRouter,
   useSearchParams,
 } from "next/navigation";
+import { useCart } from "@/context/CartContext";
+import FavoriteLoginModal from "./FavoriteLoginModal";
 
 
 const collections = [
@@ -34,17 +40,139 @@ export default function ProductsCatalog({ products = [], categories = [] }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { addToCart } = useCart();
 
   useEffect(() => {
-  window.scrollTo({
-    top: 0,
-    left: 0,
-    behavior: "instant",
-  });
-}, []);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, []);
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sort, setSort] = useState("default");
+  const [favoriteIds, setFavoriteIds] = useState([]);
+  const [favoriteLoading, setFavoriteLoading] = useState(null);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [favoriteError, setFavoriteError] = useState("");
+  const [cartError, setCartError] = useState("");
+  const [addedProductId, setAddedProductId] = useState(null);
+
+ useEffect(() => {
+  let cancelled = false;
+
+  async function loadFavorites() {
+    try {
+      const response = await fetch("/api/store/favorites", {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+
+      if (cancelled) return;
+
+      if (response.status === 401) {
+        setFavoriteIds([]);
+        return;
+      }
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+
+      if (!cancelled) {
+        setFavoriteIds(
+          Array.isArray(data.productIds) ? data.productIds : []
+        );
+      }
+    } catch (error) {
+      console.error("Favoriler yüklenemedi:", error);
+    }
+  }
+
+  const handleFavoritesUpdated = () => {
+    loadFavorites();
+  };
+
+  loadFavorites();
+
+  window.addEventListener(
+    "vicix:favorites-updated",
+    handleFavoritesUpdated
+  );
+
+  return () => {
+    cancelled = true;
+
+    window.removeEventListener(
+      "vicix:favorites-updated",
+      handleFavoritesUpdated
+    );
+  };
+}, []);
+
+  async function toggleFavorite(productId) {
+    if (favoriteLoading) return;
+    setFavoriteError("");
+    setFavoriteLoading(productId);
+
+    try {
+      const isFavorite = favoriteIds.includes(productId);
+      const response = await fetch("/api/store/favorites", {
+        method: isFavorite ? "DELETE" : "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId }),
+      });
+
+      if (response.status === 401) {
+        setFavoriteIds([]);
+        setLoginModalOpen(true);
+        return;
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        setFavoriteError(data.error || "Favori işlemi gerçekleştirilemedi.");
+        return;
+      }
+
+  setFavoriteIds((previous) =>
+  data.isFavorite
+    ? previous.includes(productId)
+      ? previous
+      : [...previous, productId]
+    : previous.filter((id) => id !== productId)
+);
+
+window.dispatchEvent(
+  new CustomEvent("vicix:favorites-updated", {
+    detail: {
+      productId,
+      isFavorite: data.isFavorite,
+    },
+  })
+);
+    } catch (error) {
+      console.error("Favori işlemi hatası:", error);
+      setFavoriteError("Bir bağlantı hatası oluştu. Lütfen tekrar deneyin.");
+    } finally {
+      setFavoriteLoading(null);
+    }
+  }
+
+  function handleAddToCart(product) {
+    setCartError("");
+    const success = addToCart(product, 1);
+
+    if (!success) {
+      setCartError(`${product.name} şu anda sepete eklenemiyor.`);
+      return;
+    }
+
+    setAddedProductId(product.id);
+    window.setTimeout(() => {
+      setAddedProductId((current) =>
+        current === product.id ? null : current
+      );
+    }, 1800);
+  }
 
   const categoryParam = searchParams.get("kategori");
   const collectionParam = searchParams.get("koleksiyon");
@@ -312,6 +440,11 @@ export default function ProductsCatalog({ products = [], categories = [] }) {
                   <ProductItem
                     key={product.id}
                     product={product}
+                    isFavorite={favoriteIds.includes(product.id)}
+                    favoriteLoading={favoriteLoading === product.id}
+                    onToggleFavorite={toggleFavorite}
+                    onAddToCart={handleAddToCart}
+                    addedToCart={addedProductId === product.id}
                   />
                 ))}
               </div>
@@ -408,6 +541,23 @@ export default function ProductsCatalog({ products = [], categories = [] }) {
           </div>
         </aside>
       </div>
+
+      {(favoriteError || cartError) && (
+        <div
+          role="alert"
+          className="fixed bottom-24 left-1/2 z-[250] w-[calc(100%-32px)] max-w-[420px] -translate-x-1/2 border border-[#A61922]/20 bg-[#F4F3EF] px-5 py-4 text-center text-[12px] text-[#A61922] shadow-xl"
+        >
+          {favoriteError || cartError}
+          <button type="button" onClick={() => { setFavoriteError(""); setCartError(""); }} className="ml-3 font-bold underline">
+            Kapat
+          </button>
+        </div>
+      )}
+
+      <FavoriteLoginModal
+        open={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+      />
     </main>
   );
 }
@@ -531,67 +681,130 @@ function FilterOption({
 }
 
 /* PRODUCT ITEM */
-function ProductItem({ product }) {
+function ProductItem({
+  product,
+  isFavorite,
+  favoriteLoading,
+  onToggleFavorite,
+  onAddToCart,
+  addedToCart,
+}) {
+  const href = `/urunler/${product.id}`;
+  const hasDiscount =
+    product.salePrice != null &&
+    product.originalPrice != null &&
+    product.salePrice < product.originalPrice;
+  const outOfStock =
+    product.stock != null && Number(product.stock) <= 0;
 
   return (
-    <article className="group min-w-0">
-      <Link
-        href={`/urunler/${product.id}`}
-        aria-label={`${product.name} ürün detayını görüntüle`}
-        className="block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#111312]"
-      >
+    <article className="group flex min-w-0 flex-col">
       <div className="relative aspect-[4/5] overflow-hidden bg-[#E6E8E3]">
-        {product.image ? (
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, (max-width: 1279px) 40vw, 25vw"
-            className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.045]"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-xs text-[#858B85]">Görsel hazırlanıyor</div>
-        )}
-
-        {product.isNew && (
-          <span className="absolute left-3 top-3 bg-[#B7FF3C] px-2.5 py-1.5 font-[family-name:var(--font-manrope)] text-[9px] font-bold uppercase tracking-[0.1em] text-[#111312]">
+        <Link
+          href={href}
+          aria-label={`${product.name} ürün detayını görüntüle`}
+          className="absolute inset-0 block focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#111312]"
+        >
+          {product.image ? (
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, (max-width: 1279px) 40vw, 25vw"
+              className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.045]"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-xs text-[#858B85]">
+              Görsel hazırlanıyor
+            </div>
+          )}
+        </Link>
+        {product.isNew ? (
+          <span className="pointer-events-none absolute left-3 top-3 bg-[#B7FF3C] px-2.5 py-1.5 font-[family-name:var(--font-manrope)] text-[9px] font-bold uppercase tracking-[0.1em] text-[#111312]">
             Yeni
           </span>
-        )}
-
-        {product.isBestSeller && !product.isNew && (
-          <span className="absolute left-3 top-3 bg-[#111312] px-2.5 py-1.5 font-[family-name:var(--font-manrope)] text-[9px] font-bold uppercase tracking-[0.1em] text-white">
+        ) : product.isBestSeller ? (
+          <span className="pointer-events-none absolute left-3 top-3 bg-[#111312] px-2.5 py-1.5 font-[family-name:var(--font-manrope)] text-[9px] font-bold uppercase tracking-[0.1em] text-white">
             Çok Satan
           </span>
-        )}
+        ) : null}
       </div>
 
-      <div className="mt-4 flex items-start justify-between gap-2 border-b border-[#D8DBD7] pb-5 sm:mt-5">
-        <div className="min-w-0">
-          <p className="font-[family-name:var(--font-manrope)] text-[9px] font-semibold uppercase tracking-[0.12em] text-[#858B85]">
-            {product.categoryName || product.category}
-          </p>
-
-          <h3 className="mt-2 font-[family-name:var(--font-manrope)] text-[12px] font-semibold leading-5 tracking-[-0.02em] sm:text-[15px]">
-            {product.name}
-          </h3>
-
-          <p className="mt-3 font-[family-name:var(--font-manrope)] text-[12px] font-bold sm:text-[15px]">
-            {product.salePrice != null && product.salePrice < product.originalPrice && (
-              <span className="mr-2 text-[11px] font-normal text-[#858B85] line-through">{formatPrice.format(product.originalPrice)}</span>
-            )}
-            {formatPrice.format(product.price)}
-          </p>
+      <div className="mt-4 flex flex-1 flex-col border-b border-[#D8DBD7] pb-5 sm:mt-5">
+        <div className="flex items-start justify-between gap-2">
+          <Link
+            href={href}
+            aria-label={`${product.name} ürün detayını görüntüle`}
+            className="min-w-0 flex-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#111312]"
+          >
+            <p className="font-[family-name:var(--font-manrope)] text-[9px] font-semibold uppercase tracking-[0.12em] text-[#858B85]">
+              {product.categoryName || product.category}
+            </p>
+            <h3 className="mt-2 font-[family-name:var(--font-manrope)] text-[12px] font-semibold leading-5 tracking-[-0.02em] text-[#111312] transition-colors hover:text-[#A61922] sm:text-[15px]">
+              {product.name}
+            </h3>
+          </Link>
+          <Link
+            href={href}
+            aria-label={`${product.name} detaylarını görüntüle`}
+            className="flex h-8 w-8 shrink-0 items-center justify-center border border-[#D8DBD7] text-[#111312] transition-colors duration-300 hover:border-[#111312] sm:h-9 sm:w-9"
+          >
+            <ArrowUpRight size={16} strokeWidth={1.6} />
+          </Link>
         </div>
 
-        <span
-          aria-hidden="true"
-          className="flex h-8 w-8 shrink-0 items-center justify-center border border-[#D8DBD7] text-[#111312] transition-colors duration-300 group-hover:border-[#111312] sm:h-9 sm:w-9"
-        >
-          <ArrowUpRight size={16} strokeWidth={1.6} />
-        </span>
+        <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          {hasDiscount && (
+            <span className="text-[11px] font-normal text-[#858B85] line-through">
+              {formatPrice.format(product.originalPrice)}
+            </span>
+          )}
+          <span className="font-[family-name:var(--font-manrope)] text-[12px] font-bold text-[#111312] sm:text-[15px]">
+            {formatPrice.format(product.price)}
+          </span>
+        </div>
+
+        <div className="mt-auto space-y-2 pt-5">
+          <button
+            type="button"
+            disabled={outOfStock}
+            onClick={() => onAddToCart(product)}
+            aria-label={outOfStock ? `${product.name} stokta yok` : `${product.name} ürününü sepete ekle`}
+            className={`group/cart flex min-h-[46px] w-full items-center justify-center gap-2 border px-2 font-[family-name:var(--font-manrope)] text-[9px] font-bold uppercase tracking-[0.04em] transition-all duration-300 sm:min-h-[48px] sm:gap-3 sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
+              outOfStock
+                ? "cursor-not-allowed border-[#D8DBD7] bg-[#E6E8E3] text-[#858B85]"
+                : addedToCart
+                  ? "border-[#2E6B3F] !bg-[#2E6B3F] !text-white"
+                  : "border-[#111312] !bg-[#111312] !text-white hover:!border-[#A61922] hover:!bg-[#A61922]"
+            }`}
+          >
+            {addedToCart ? <Check size={16} strokeWidth={1.8} /> : <ShoppingBag size={16} strokeWidth={1.6} />}
+            <span className="!text-inherit">
+              {outOfStock ? "Stokta Yok" : addedToCart ? "Sepete Eklendi" : "Sepete Ekle"}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            disabled={favoriteLoading}
+            onClick={() => onToggleFavorite(product.id)}
+            aria-pressed={isFavorite}
+            aria-label={isFavorite ? `${product.name} ürününü favorilerden çıkar` : `${product.name} ürününü favorilere ekle`}
+            className={`flex min-h-[44px] w-full items-center justify-center gap-2 border px-2 font-[family-name:var(--font-manrope)] text-[9px] font-semibold uppercase tracking-[0.04em] transition-all duration-300 disabled:cursor-wait disabled:opacity-60 sm:min-h-[46px] sm:gap-3 sm:px-4 sm:text-[10px] sm:tracking-[0.07em] ${
+              isFavorite
+                ? "border-[#A61922] bg-[#F4F3EF] text-[#A61922] hover:bg-[#FBEAEC]"
+                : "border-[#C8CDC7] bg-transparent text-[#111312] hover:border-[#A61922] hover:text-[#A61922]"
+            }`}
+          >
+            {favoriteLoading ? (
+              <LoaderCircle size={16} strokeWidth={1.7} className="animate-spin" />
+            ) : (
+              <Heart size={16} strokeWidth={1.7} fill={isFavorite ? "currentColor" : "none"} />
+            )}
+            <span>{isFavorite ? "Favorilerden Çıkar" : "Favorilere Ekle"}</span>
+          </button>
+        </div>
       </div>
-      </Link>
     </article>
   );
 }

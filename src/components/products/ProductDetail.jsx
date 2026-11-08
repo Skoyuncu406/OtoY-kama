@@ -2,6 +2,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import FavoriteLoginModal from "@/components/products/FavoriteLoginModal";
+import { useCart } from "@/context/CartContext";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -15,6 +17,8 @@ import {
   RotateCcw,
   ChevronDown,
   ImageOff,
+  Check,
+  LoaderCircle,
 } from "lucide-react";
 
 const formatPrice = (price) =>
@@ -25,8 +29,14 @@ const formatPrice = (price) =>
   }).format(price);
 
 export default function ProductDetail({ product }) {
+  const { addToCart } = useCart();
+  const [addedToCart, setAddedToCart] = useState(false);
+  const [cartError, setCartError] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [favoriteError, setFavoriteError] = useState("");
   const [activeAccordion, setActiveAccordion] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
 
@@ -49,17 +59,79 @@ export default function ProductDetail({ product }) {
     Number(product.salePrice) < Number(product.originalPrice);
 
   useEffect(() => {
+    let cancelled = false;
+    setIsFavorite(false);
+    async function loadFavorite() {
+      try {
+        const response = await fetch("/api/store/favorites", { cache: "no-store", credentials: "same-origin" });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!cancelled) setIsFavorite(Array.isArray(data.productIds) && data.productIds.includes(product.id));
+      } catch (error) { console.error("Favori durumu alınamadı:", error); }
+    }
+    loadFavorite();
+    const onUpdated = () => loadFavorite();
+    window.addEventListener("vicix:favorites-updated", onUpdated);
+    return () => { cancelled = true; window.removeEventListener("vicix:favorites-updated", onUpdated); };
+  }, [product.id]);
+
+  async function toggleFavorite() {
+    if (favoriteLoading) return;
+    setFavoriteLoading(true);
+    setFavoriteError("");
+    try {
+      const response = await fetch("/api/store/favorites", {
+        method: isFavorite ? "DELETE" : "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id }),
+      });
+      if (response.status === 401) {
+        setIsFavorite(false);
+        setLoginModalOpen(true);
+        return;
+      }
+      const data = await response.json();
+      if (!response.ok) {
+        setFavoriteError(data.error || "Favori işlemi gerçekleştirilemedi.");
+        return;
+      }
+      setIsFavorite(Boolean(data.isFavorite));
+      window.dispatchEvent(new Event("vicix:favorites-updated"));
+    } catch (error) {
+      console.error("Favori işlemi:", error);
+      setFavoriteError("Bağlantı hatası oluştu. Lütfen tekrar deneyin.");
+    } finally { setFavoriteLoading(false); }
+  }
+
+  useEffect(() => {
     setActiveImage(0);
     setQuantity(1);
     setIsFavorite(false);
     setActiveAccordion(null);
+    setAddedToCart(false);
+    setCartError("");
   }, [product.id]);
 
   const changeQuantity = (amount) => {
+    setAddedToCart(false);
     setQuantity((current) =>
       Math.max(1, Math.min(maxQuantity || 1, current + amount))
     );
   };
+
+  function handleAddToCart() {
+    setCartError("");
+    if (outOfStock) return;
+
+    const success = addToCart(product, quantity);
+    if (!success) {
+      setCartError("Ürün şu anda sepete eklenemiyor.");
+      return;
+    }
+
+    setAddedToCart(true);
+  }
 
   const accordionItems = [
     {
@@ -90,13 +162,12 @@ export default function ProductDetail({ product }) {
         w-full min-w-0 overflow-x-clip
         bg-[var(--background)]
         text-[var(--foreground)]
-        lg:h-[calc(100dvh-var(--site-header-height,0px)-var(--header-height,80px))]
-        lg:overflow-hidden
+        min-h-screen
       "
     >
       <div
         className="
-          mx-auto flex h-full w-full max-w-[1440px]
+          mx-auto flex w-full max-w-[1440px]
           flex-col px-5 pb-24 pt-5
           sm:px-8
           lg:px-12 lg:pb-5 lg:pt-5
@@ -138,8 +209,8 @@ export default function ProductDetail({ product }) {
         {/* PRODUCT LAYOUT */}
         <div
           className="
-            grid min-h-0 flex-1 grid-cols-1
-            items-center gap-8 pt-6
+            grid min-w-0 grid-cols-1
+            items-start gap-8 pt-6
             lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]
             lg:gap-12 lg:pt-3
             xl:gap-16
@@ -148,9 +219,10 @@ export default function ProductDetail({ product }) {
           {/* PRODUCT GALLERY */}
           <div
             className="
-              flex min-h-0 min-w-0 w-full
+              flex min-w-0 w-full
               flex-col gap-3
-              lg:h-full lg:max-h-[650px]
+              lg:sticky lg:top-[calc(var(--site-header-height,100px)+20px)]
+              lg:h-[min(650px,calc(100dvh-var(--site-header-height,100px)-48px))]
               lg:flex-row lg:gap-4
             "
           >
@@ -264,11 +336,9 @@ export default function ProductDetail({ product }) {
           {/* PRODUCT INFORMATION */}
           <div
             className="
-              flex min-h-0 w-full min-w-0
-              flex-col justify-center
-              lg:max-h-full lg:overflow-y-auto
+              flex w-full min-w-0
+              flex-col justify-start
               lg:py-2
-              [scrollbar-width:thin]
             "
           >
             {/* CATEGORY */}
@@ -367,52 +437,72 @@ export default function ProductDetail({ product }) {
 
               <button
                 type="button"
-                disabled
-                title={
-                  outOfStock
-                    ? "Ürün stokta bulunmuyor"
-                    : "Sepet entegrasyonu hazırlanıyor"
-                }
-                className="
+                onClick={handleAddToCart}
+                disabled={outOfStock}
+                className={`
                   flex h-[52px] min-w-0 flex-1
                   items-center justify-center gap-2
-                  bg-[#111312] px-3
-                  text-[10px] font-semibold
-                  uppercase tracking-[0.08em]
-                  text-[#F4F3EF]
-                  opacity-65
-                  cursor-not-allowed
-                  sm:gap-3 sm:px-4 sm:tracking-[0.12em]
-                "
-              >
-                <ShoppingBag size={17} strokeWidth={1.5} />
-                {outOfStock ? "Stokta Yok" : "Sepete Ekle"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsFavorite((current) => !current)}
-                aria-label={
-                  isFavorite
-                    ? "Favori işaretini kaldır"
-                    : "Favori olarak işaretle"
-                }
-                aria-pressed={isFavorite}
-                className="
-                  flex h-[52px] w-[52px]
-                  shrink-0 items-center justify-center
-                  border border-[#D8DBD7]
+                  border px-3 text-[10px] font-semibold
+                  uppercase tracking-[0.06em]
                   transition-colors duration-300
-                  hover:border-[#111312]
-                "
+                  sm:gap-3 sm:px-4 sm:tracking-[0.12em]
+                  ${
+                    outOfStock
+                      ? "cursor-not-allowed border-[#D8DBD7] bg-[#E6E8E3] text-[#858B85]"
+                      : addedToCart
+                        ? "border-[#2E6B3F] !bg-[#2E6B3F] !text-white"
+                        : "border-[#111312] !bg-[#111312] !text-white hover:!border-[#A61922] hover:!bg-[#A61922]"
+                  }
+                `}
               >
-                <Heart
-                  size={19}
-                  strokeWidth={1.5}
-                  fill={isFavorite ? "currentColor" : "none"}
-                />
+                {addedToCart ? (
+                  <Check size={17} strokeWidth={1.7} />
+                ) : (
+                  <ShoppingBag size={17} strokeWidth={1.5} />
+                )}
+                <span className="!text-inherit">
+                  {outOfStock
+                    ? "Stokta Yok"
+                    : addedToCart
+                      ? "Sepete Eklendi"
+                      : "Sepete Ekle"}
+                </span>
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={toggleFavorite}
+              disabled={favoriteLoading}
+              aria-pressed={isFavorite}
+              aria-label={isFavorite ? "Favorilerden çıkar" : "Favorilere ekle"}
+              className={`
+                mt-3 flex min-h-[48px] w-full items-center
+                justify-center gap-3 border px-4
+                font-[family-name:var(--font-manrope)]
+                text-[11px] font-semibold uppercase tracking-[0.08em]
+                transition-colors duration-300
+                disabled:cursor-wait disabled:opacity-60
+                ${
+                  isFavorite
+                    ? "border-[#A61922] text-[#A61922] hover:bg-[#FBEAEC]"
+                    : "border-[#C8CDC7] text-[#111312] hover:border-[#A61922] hover:text-[#A61922]"
+                }
+              `}
+            >
+              {favoriteLoading ? (
+                <LoaderCircle size={17} strokeWidth={1.7} className="animate-spin" />
+              ) : (
+                <Heart size={17} strokeWidth={1.7} fill={isFavorite ? "currentColor" : "none"} />
+              )}
+              <span>{isFavorite ? "Favorilerden Çıkar" : "Favorilere Ekle"}</span>
+            </button>
+
+            {(favoriteError || cartError) && (
+              <p role="alert" className="mt-3 text-[12px] text-[#A61922]">
+                {favoriteError || cartError}
+              </p>
+            )}
 
             {/* BENEFITS */}
             <div className="mt-6 grid grid-cols-3 gap-3 border-b border-[#D8DBD7] pb-6">
@@ -469,7 +559,7 @@ export default function ProductDetail({ product }) {
                     </button>
 
                     {isOpen && (
-                      <div className="whitespace-pre-line pb-4 pr-5 text-[11px] leading-6 text-[#858B85]">
+                      <div className="min-w-0 w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] pb-5 text-[12px] leading-7 text-[#858B85]">
                         {item.content}
                       </div>
                     )}
@@ -480,6 +570,7 @@ export default function ProductDetail({ product }) {
           </div>
         </div>
       </div>
+      <FavoriteLoginModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
     </main>
   );
 }
