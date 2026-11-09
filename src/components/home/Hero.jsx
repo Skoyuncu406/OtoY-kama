@@ -129,6 +129,9 @@ export default function Hero() {
         "
       />
 
+      {/* FAR IŞIKLARI — görselle aynı object-cover koordinat sistemi */}
+      <HeadlightEffect />
+
       {/* DESKTOP LEFT CONTRAST OVERLAY */}
       <div
         aria-hidden="true"
@@ -662,5 +665,75 @@ function HeroMeta({
         </p>
       </div>
     </div>
+  );
+}
+
+/* Görselin doğal çözünürlüğü 1670 × 941.
+   SVG aynı viewBox ve slice davranışıyla farları görsele sabitler. */
+function HeadlightEffect() {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      viewBox="0 0 1670 941"
+      preserveAspectRatio="xMidYMid slice"
+      className="pointer-events-none absolute inset-0 z-[1] h-full w-full overflow-hidden"
+    >
+      <defs>
+        <filter id="vicix-headlight-glow" x="-130%" y="-200%" width="360%" height="500%">
+          <feGaussianBlur stdDeviation="12" />
+        </filter>
+        <filter id="vicix-headlight-core" x="-70%" y="-130%" width="240%" height="360%">
+          <feGaussianBlur stdDeviation="2.8" />
+        </filter>
+        <radialGradient id="vicix-headlight-halo">
+          <stop offset="0%" stopColor="#f8fcff" stopOpacity=".67" />
+          <stop offset="30%" stopColor="#d9eeff" stopOpacity=".32" />
+          <stop offset="100%" stopColor="#d9eeff" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      {/* Farların etrafındaki yumuşak ışık yayılımı */}
+      <g className="vicix-lamps vicix-lamps-halo">
+        <ellipse cx="418" cy="553" rx="69" ry="43" fill="url(#vicix-headlight-halo)" />
+        <ellipse cx="842" cy="547" rx="120" ry="56" fill="url(#vicix-headlight-halo)" />
+      </g>
+
+      {/* LED hatları: geniş glow, hafif blur ve keskin ışık çekirdeği */}
+      <g className="vicix-lamps vicix-lamps-beam" fill="none" strokeLinecap="round" strokeLinejoin="round">
+        <g filter="url(#vicix-headlight-glow)" stroke="#e4f4ff" strokeWidth="17" opacity=".9">
+          <path d="M 389 567 L 404 573 L 416 560 L 420 539 L 425 530 L 432 551 L 443 562" />
+          <path d="M 769 563 L 796 578 L 820 567 L 834 548 L 855 561 L 874 537 L 938 512" />
+        </g>
+        <g filter="url(#vicix-headlight-core)" stroke="#f4faff" strokeWidth="8" opacity=".95">
+          <path d="M 389 567 L 404 573 L 416 560 L 420 539 L 425 530 L 432 551 L 443 562" />
+          <path d="M 769 563 L 796 578 L 820 567 L 834 548 L 855 561 L 874 537 L 938 512" />
+        </g>
+        <g stroke="#ffffff" strokeWidth="2.7" opacity=".95">
+          <path d="M 389 567 L 404 573 L 416 560 L 420 539 L 425 530 L 432 551 L 443 562" />
+          <path d="M 769 563 L 796 578 L 820 567 L 834 548 L 855 561 L 874 537 L 938 512" />
+        </g>
+      </g>
+      <style>{`
+        .vicix-lamps {
+          opacity: 0;
+          transform-box: fill-box;
+          animation: vicix-lamps-on 3.2s cubic-bezier(.22,1,.36,1) 1.25s forwards;
+        }
+        .vicix-lamps-halo {
+          animation-delay: 1.45s;
+          animation-duration: 3.6s;
+        }
+        @keyframes vicix-lamps-on {
+          0% { opacity: 0; }
+          30% { opacity: .10; }
+          65% { opacity: .55; }
+          100% { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .vicix-lamps { animation: none; opacity: 1; }
+        }
+      `}</style>
+    </svg>
   );
 }

@@ -469,7 +469,12 @@ export default function Header() {
           <div className="relative grid h-full w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-5">
             {/* ARAMA */}
             <div className="flex min-w-0 items-center justify-start">
-              <HeaderSearch router={router} />
+              <HeaderSearch
+                  router={router}
+                  categories={categories}
+                  categoriesLoading={categoriesLoading}
+                  categoriesError={categoriesError}
+                />
             </div>
 
             {/* DESKTOP NAVIGATION */}
@@ -928,52 +933,243 @@ function MobileNavigationLink({
   );
 }
 
-function HeaderSearch({ router }) {
+function normalizeSearchText(value) {
+  return String(value ?? "")
+    .toLocaleLowerCase("tr-TR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ı/g, "i")
+    .trim();
+}
+
+function HeaderSearch({
+  router,
+  categories = [],
+  categoriesLoading = false,
+  categoriesError = false,
+}) {
   const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const searchRef = useRef(null);
+  const inputRef = useRef(null);
+  const listId = "vicix-search-suggestions";
+
+  const normalizedQuery = normalizeSearchText(query);
+  const matchedCategories = normalizedQuery
+    ? categories
+        .filter((category) =>
+          normalizeSearchText(category.name ?? category.title).includes(
+            normalizedQuery
+          )
+        )
+        .slice(0, 7)
+    : [];
+  const showDropdown = isOpen && normalizedQuery.length > 0;
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (!searchRef.current?.contains(event.target)) {
+        setIsOpen(false);
+        setActiveIndex(-1);
+      }
+    };
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+        setActiveIndex(-1);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  const selectCategory = (category) => {
+    if (!category?.slug) return;
+    setQuery("");
+    setIsOpen(false);
+    setActiveIndex(-1);
+    inputRef.current?.blur();
+    router.push(`/urunler?kategori=${encodeURIComponent(category.slug)}`);
+  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    if (!normalizedQuery) {
+      inputRef.current?.focus();
+      return;
+    }
+    const category =
+      activeIndex >= 0
+        ? matchedCategories[activeIndex]
+        : matchedCategories[0];
+    if (category) selectCategory(category);
+    else setIsOpen(true);
+  };
 
-    const searchValue = query.trim();
-
-    if (searchValue) {
-      router.push(
-        `/arama?q=${encodeURIComponent(searchValue)}`
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      setIsOpen(false);
+      setActiveIndex(-1);
+      return;
+    }
+    if (!showDropdown || matchedCategories.length === 0) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveIndex((previous) =>
+        previous >= matchedCategories.length - 1 ? 0 : previous + 1
+      );
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((previous) =>
+        previous <= 0 ? matchedCategories.length - 1 : previous - 1
       );
     }
   };
 
   return (
-    <form
-      role="search"
-      onSubmit={handleSubmit}
-      className="group flex h-10 w-full min-w-0 max-w-[100px] items-center gap-1 border-b border-[#C7CCC5] transition-colors duration-300 focus-within:border-[#111312] min-[380px]:max-w-[125px] sm:max-w-[190px] sm:gap-2 lg:max-w-[240px]"
+    <div
+      ref={searchRef}
+      className="relative z-[110] w-full min-w-0 max-w-[145px] min-[380px]:max-w-[175px] sm:max-w-[190px] lg:max-w-[240px]"
     >
-      <button
-        type="submit"
-        aria-label="Ürün ara"
-        className="flex h-9 w-5 shrink-0 items-center justify-start text-[#111312] transition-opacity duration-300 hover:opacity-60 sm:w-6"
+      <form
+        role="search"
+        onSubmit={handleSubmit}
+        className={`group flex h-10 w-full min-w-0 items-center gap-1 border-b transition-colors duration-300 sm:gap-2 ${
+          showDropdown
+            ? "border-[#A61922]"
+            : "border-[#C7CCC5] focus-within:border-[#111312]"
+        }`}
       >
-        <Search
-          size={17}
-          strokeWidth={1.6}
+        <button
+          type="submit"
+          aria-label="Kategori ara"
+          className="flex h-9 w-5 shrink-0 items-center justify-start text-[#111312] transition-colors duration-300 hover:text-[#A61922] sm:w-6"
+        >
+          <Search size={17} strokeWidth={1.6} />
+        </button>
+        <input
+          ref={inputRef}
+          type="search"
+          name="q"
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setIsOpen(true);
+            setActiveIndex(-1);
+          }}
+          onFocus={() => {
+            if (query.trim()) setIsOpen(true);
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder="Kategori ara..."
+          aria-label="Kategori ara"
+          aria-autocomplete="list"
+          aria-expanded={showDropdown}
+          aria-controls={showDropdown ? listId : undefined}
+          aria-activedescendant={
+            showDropdown && activeIndex >= 0
+              ? `${listId}-${activeIndex}`
+              : undefined
+          }
+          autoComplete="off"
+          enterKeyHint="search"
+          className="h-full w-full min-w-0 border-0 bg-transparent p-0 font-[family-name:var(--font-manrope)] text-[10px] font-medium text-[#111312] outline-none ring-0 placeholder:text-[#9AA19A] focus:border-0 focus:bg-transparent focus:outline-none focus:ring-0 sm:text-[12px] [&::-webkit-search-cancel-button]:cursor-pointer"
         />
-      </button>
+      </form>
 
-      <input
-        type="search"
-        name="q"
-        value={query}
-        onChange={(event) =>
-          setQuery(event.target.value)
-        }
-        placeholder="Ürün ara..."
-        aria-label="Ürün ara"
-        autoComplete="off"
-        enterKeyHint="search"
-        className="h-full w-full min-w-0 border-0 bg-transparent p-0 font-[family-name:var(--font-manrope)] text-[10px] font-medium text-[#111312] outline-none ring-0 placeholder:text-[#9AA19A] focus:border-0 focus:bg-transparent focus:outline-none focus:ring-0 sm:text-[12px]"
-      />
-    </form>
+      {showDropdown && (
+        <div className="absolute left-0 top-[calc(100%+12px)] z-[120] w-[min(340px,calc(100vw-24px))] border border-[#E0E0D9] bg-[#F4F3EF] shadow-[0_22px_55px_rgba(17,19,18,0.15)] sm:w-[340px]">
+          <div className="border-b border-[#E0E0D9] px-5 py-4">
+            <span className="block text-[9px] font-semibold uppercase tracking-[0.2em] text-[#A61922]">
+              VICIX / SEARCH
+            </span>
+            <p className="mt-1 font-[family-name:var(--font-manrope)] text-[13px] font-semibold text-[#111312]">
+              Kategori Sonuçları
+            </p>
+          </div>
+          <div
+            id={listId}
+            role="listbox"
+            aria-label="Eşleşen kategoriler"
+            className="max-h-[min(50vh,350px)] overflow-y-auto py-2 [scrollbar-width:thin]"
+          >
+            {categoriesLoading && categories.length === 0 ? (
+              <p role="status" className="px-5 py-4 text-[12px] text-[#858B85]">
+                Kategoriler yükleniyor...
+              </p>
+            ) : categoriesError && categories.length === 0 ? (
+              <p role="status" className="px-5 py-4 text-[12px] text-[#858B85]">
+                Kategoriler şu anda yüklenemiyor.
+              </p>
+            ) : matchedCategories.length > 0 ? (
+              matchedCategories.map((category, index) => (
+                <div
+                  key={category.id ?? category.slug}
+                  id={`${listId}-${index}`}
+                  role="option"
+                  aria-selected={activeIndex === index}
+                >
+                  <Link
+                    href={`/urunler?kategori=${encodeURIComponent(category.slug)}`}
+                    onClick={(event) => {
+                      if (!isNormalClick(event)) return;
+                      event.preventDefault();
+                      selectCategory(category);
+                    }}
+                    onMouseEnter={() => setActiveIndex(index)}
+                    className={`group/item flex w-full items-center justify-between gap-3 px-5 py-3.5 transition-colors duration-200 ${
+                      activeIndex === index ? "bg-[#EAECE7]" : "hover:bg-[#EAECE7]"
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <Grid2X2
+                        size={16}
+                        strokeWidth={1.4}
+                        className="shrink-0 text-[#A61922]"
+                      />
+                      <span className="min-w-0">
+                        <span className="block truncate font-[family-name:var(--font-manrope)] text-[12px] font-semibold text-[#303530]">
+                          {category.name ?? category.title}
+                        </span>
+                        <span className="mt-0.5 block text-[10px] text-[#858B85]">
+                          Ürünleri görüntüle
+                        </span>
+                      </span>
+                    </span>
+                    <ArrowUpRight
+                      size={15}
+                      strokeWidth={1.5}
+                      className="shrink-0 text-[#A1A69F] transition-colors group-hover/item:text-[#A61922]"
+                    />
+                  </Link>
+                </div>
+              ))
+            ) : (
+              <div role="status" className="px-5 py-5">
+                <p className="text-[12px] font-medium text-[#303530]">
+                  Eşleşen kategori bulunamadı.
+                </p>
+                <p className="mt-1 text-[11px] leading-relaxed text-[#858B85]">
+                  Farklı bir kategori adı deneyebilirsiniz.
+                </p>
+              </div>
+            )}
+          </div>
+          {matchedCategories.length > 0 && (
+            <div className="border-t border-[#E0E0D9] px-5 py-3">
+              <p className="text-[10px] text-[#858B85]">
+                Ok tuşlarıyla gezinin, Enter ile seçin.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

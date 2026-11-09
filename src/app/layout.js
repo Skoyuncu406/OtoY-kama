@@ -20,24 +20,76 @@ const manrope = Manrope({
   display: "swap",
 });
 
+const siteUrl = (
+  process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+).replace(/\/+$/, "");
+
+const siteName = "VICIX";
+
+const siteTitle = "VICIX | Profesyonel Oto Bakım ve Detailing Ürünleri";
+
+const siteDescription =
+  "VICIX'te profesyonel oto bakım, araç temizliği, oto yıkama, jant temizliği, lastik parlatıcı ve detailing ürünlerini keşfedin.";
+
 export const metadata = {
+  metadataBase: new URL(siteUrl),
+
+  applicationName: siteName,
+
   title: {
-    default: "VICIX | Premium Oto Bakım & Detailing",
+    default: siteTitle,
     template: "%s | VICIX",
   },
-  description:
-    "Profesyonel oto bakım, detailing, yıkama, polisaj ve araç koruma ürünleri. VICIX ile aracınıza hak ettiği bakımı sunun.",
+
+  description: siteDescription,
+
   keywords: [
     "VICIX",
     "VICIX Car Care",
-    "oto bakım",
-    "detailing",
+    "oto bakım ürünleri",
+    "profesyonel oto bakım",
+    "oto detailing",
     "araç bakım ürünleri",
-    "oto yıkama",
+    "oto yıkama ürünleri",
+    "jant temizleme",
+    "lastik parlatıcı",
+    "araç iç temizlik",
     "pasta cila",
     "seramik kaplama",
-    "araç temizliği",
   ],
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+
+  openGraph: {
+    type: "website",
+    locale: "tr_TR",
+    url: siteUrl,
+    siteName,
+    title: siteTitle,
+    description: siteDescription,
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDescription,
+  },
+
+  formatDetection: {
+    telephone: false,
+    email: false,
+    address: false,
+  },
 };
 
 export default function RootLayout({ children }) {
