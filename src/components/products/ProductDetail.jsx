@@ -245,7 +245,7 @@ export default function ProductDetail({ product }) {
                   priority={activeImage === 0}
                   sizes="(max-width: 1023px) 100vw, 55vw"
                   className="
-                    object-cover object-center
+                    object-contain object-center
                     animate-[vicixImageFade_350ms_ease-out]
                   "
                 />
@@ -481,7 +481,7 @@ export default function ProductDetail({ product }) {
                 justify-center gap-3 border px-4
                 font-[family-name:var(--font-manrope)]
                 text-[11px] font-semibold uppercase tracking-[0.08em]
-                transition-colors duration-300
+                group/favorite transition-colors duration-300
                 disabled:cursor-wait disabled:opacity-60
                 ${
                   isFavorite
@@ -493,7 +493,15 @@ export default function ProductDetail({ product }) {
               {favoriteLoading ? (
                 <LoaderCircle size={17} strokeWidth={1.7} className="animate-spin" />
               ) : (
-                <Heart size={17} strokeWidth={1.7} fill={isFavorite ? "currentColor" : "none"} />
+                <Heart
+                  size={17}
+                  strokeWidth={1.7}
+                  className={`transition-[fill,transform,color] duration-[250ms] ease-out motion-reduce:transition-none group-hover/favorite:scale-110 ${
+                    isFavorite
+                      ? "fill-[#A61922] text-[#A61922]"
+                      : "fill-none group-hover/favorite:fill-[#A61922] group-hover/favorite:text-[#A61922]"
+                  }`}
+                />
               )}
               <span>{isFavorite ? "Favorilerden Çıkar" : "Favorilere Ekle"}</span>
             </button>

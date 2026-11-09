@@ -6,6 +6,8 @@ import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { createCategorySlug } from "@/lib/category-utils";
 
+// FİYAT DOĞRULAMA
+
 function parsePrice(value, required = false) {
   const raw = String(value ?? "")
     .trim()
@@ -15,6 +17,7 @@ function parsePrice(value, required = false) {
     if (required) {
       throw new Error("Ürün fiyatı zorunludur.");
     }
+
     return null;
   }
 
@@ -23,6 +26,7 @@ function parsePrice(value, required = false) {
   }
 
   const [whole, fraction = ""] = raw.split(".");
+
   const cents = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, "0"));
 
   if (cents <= 0n || cents > 9999999999n) {
@@ -35,6 +39,26 @@ function parsePrice(value, required = false) {
   };
 }
 
+// STOK DOĞRULAMA
+
+function parseStock(value) {
+  const raw = String(value ?? "").trim();
+
+  if (!/^\d+$/.test(raw)) {
+    throw new Error("Geçerli bir stok miktarı girin.");
+  }
+
+  const stock = Number(raw);
+
+  if (!Number.isSafeInteger(stock) || stock < 0 || stock > 1000000) {
+    throw new Error("Geçerli bir stok miktarı girin.");
+  }
+
+  return stock;
+}
+
+// ÜRÜN FORMU DOĞRULAMA
+
 function parseProduct(formData) {
   const name = String(formData.get("name") ?? "")
     .trim()
@@ -45,9 +69,6 @@ function parseProduct(formData) {
   const details = String(formData.get("details") ?? "").trim();
 
   const categoryId = String(formData.get("categoryId") ?? "").trim();
-
-  const stockRaw = String(formData.get("stock") ?? "").trim();
-  const stock = Number(stockRaw);
 
   if (name.length < 2 || name.length > 180) {
     throw new Error("Ürün adı 2–180 karakter olmalıdır.");
@@ -61,16 +82,10 @@ function parseProduct(formData) {
     throw new Error("Bir kategori seçin.");
   }
 
-  if (
-    stockRaw === "" ||
-    !Number.isSafeInteger(stock) ||
-    stock < 0 ||
-    stock > 1000000
-  ) {
-    throw new Error("Geçerli bir stok miktarı girin.");
-  }
+  const stock = parseStock(formData.get("stock"));
 
   const price = parsePrice(formData.get("price"), true);
+
   const salePrice = parsePrice(formData.get("salePrice"));
 
   if (salePrice && salePrice.cents >= price.cents) {
@@ -98,6 +113,8 @@ function parseProduct(formData) {
   };
 }
 
+// KATEGORİ KONTROLÜ
+
 async function validateCategory(categoryId) {
   const category = await prisma.category.findUnique({
     where: { id: categoryId },
@@ -109,10 +126,14 @@ async function validateCategory(categoryId) {
   }
 }
 
+// SAYFALARI YENİLE
+
 function refreshProducts() {
   revalidatePath("/admin");
   revalidatePath("/admin/urunler");
 }
+
+// HATA YÖNETİMİ
 
 function actionError(error) {
   if (error?.code === "P2002") {
@@ -143,7 +164,10 @@ function actionError(error) {
   ];
 
   if (knownMessages.includes(error?.message)) {
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 
   console.error("Ürün işlemi hatası:", error);
@@ -153,6 +177,8 @@ function actionError(error) {
     error: "İşlem gerçekleştirilemedi. Tekrar deneyin.",
   };
 }
+
+// YENİ ÜRÜN OLUŞTUR
 
 export async function createProductAction(formData) {
   await requireAdmin();
@@ -168,19 +194,27 @@ export async function createProductAction(formData) {
 
     refreshProducts();
 
-    return { success: true, error: null };
+    return {
+      success: true,
+      error: null,
+    };
   } catch (error) {
     return actionError(error);
   }
 }
 
+// ÜRÜN GÜNCELLE
+
 export async function updateProductAction(formData) {
   await requireAdmin();
 
-  const id = String(formData.get("id") ?? "");
+  const id = String(formData.get("id") ?? "").trim();
 
   if (!id) {
-    return { success: false, error: "Ürün kimliği eksik." };
+    return {
+      success: false,
+      error: "Ürün kimliği eksik.",
+    };
   }
 
   try {
@@ -194,21 +228,69 @@ export async function updateProductAction(formData) {
     });
 
     if (result.count === 0) {
-      return { success: false, error: "Ürün bulunamadı." };
+      return {
+        success: false,
+        error: "Ürün bulunamadı.",
+      };
     }
 
     refreshProducts();
 
-    return { success: true, error: null };
+    return {
+      success: true,
+      error: null,
+    };
   } catch (error) {
     return actionError(error);
   }
 }
 
+// HIZLI STOK GÜNCELLEME
+
+export async function updateProductStockAction(formData) {
+  await requireAdmin();
+
+  try {
+    const id = String(formData.get("id") ?? "").trim();
+
+    if (!id) {
+      return {
+        success: false,
+        error: "Ürün kimliği eksik.",
+      };
+    }
+
+    const stock = parseStock(formData.get("stock"));
+
+    const result = await prisma.product.updateMany({
+      where: { id },
+      data: { stock },
+    });
+
+    if (result.count === 0) {
+      return {
+        success: false,
+        error: "Ürün bulunamadı.",
+      };
+    }
+
+    refreshProducts();
+
+    return {
+      success: true,
+      error: null,
+    };
+  } catch (error) {
+    return actionError(error);
+  }
+}
+
+// ÜRÜN AKTİF / PASİF
+
 export async function toggleProductAction(formData) {
   await requireAdmin();
 
-  const id = String(formData.get("id") ?? "");
+  const id = String(formData.get("id") ?? "").trim();
 
   const product = await prisma.product.findUnique({
     where: { id },
@@ -216,39 +298,56 @@ export async function toggleProductAction(formData) {
   });
 
   if (!product) {
-    return { success: false, error: "Ürün bulunamadı." };
+    return {
+      success: false,
+      error: "Ürün bulunamadı.",
+    };
   }
 
   await prisma.product.update({
     where: { id },
-    data: { isActive: !product.isActive },
+    data: {
+      isActive: !product.isActive,
+    },
   });
 
   refreshProducts();
 
-  return { success: true, error: null };
+  return {
+    success: true,
+    error: null,
+  };
 }
+
+// ÜRÜN SİL
 
 export async function deleteProductAction(formData) {
   await requireAdmin();
 
-  const id = String(formData.get("id") ?? "");
+  const id = String(formData.get("id") ?? "").trim();
 
   const product = await prisma.product.findUnique({
     where: { id },
     select: {
       id: true,
-      _count: { select: { images: true } },
+      _count: {
+        select: {
+          images: true,
+        },
+      },
     },
   });
 
   if (!product) {
-    return { success: false, error: "Ürün bulunamadı." };
+    return {
+      success: false,
+      error: "Ürün bulunamadı.",
+    };
   }
 
-  // Görsel yönetimini sonraki aşamada ekleyeceğiz.
-  // Görselleri olan ürünlerin Cloudinary dosyalarını
-  // yanlışlıkla sahipsiz bırakmamak için silmeyi engelliyoruz.
+  // Cloudinary görsellerini sahipsiz bırakmamak
+  // için görseli olan ürünlerin silinmesini engelle.
+
   if (product._count.images > 0) {
     return {
       success: false,
@@ -256,9 +355,14 @@ export async function deleteProductAction(formData) {
     };
   }
 
-  await prisma.product.delete({ where: { id } });
+  await prisma.product.delete({
+    where: { id },
+  });
 
   refreshProducts();
 
-  return { success: true, error: null };
+  return {
+    success: true,
+    error: null,
+  };
 }

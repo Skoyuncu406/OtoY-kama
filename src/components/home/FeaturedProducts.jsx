@@ -470,7 +470,7 @@ function FeaturedProductCard({
                 : `${product.name} ürününü favorilere ekle`
             }
             className={`
-              flex min-h-[44px] w-full
+              group/favorite flex min-h-[44px] w-full
               items-center justify-center gap-2
               border px-2
               font-[family-name:var(--font-manrope)]
@@ -499,11 +499,18 @@ function FeaturedProductCard({
               <Heart
                 size={16}
                 strokeWidth={1.7}
-                fill={
-                  isFavorite
-                    ? "currentColor"
-                    : "none"
-                }
+                className={`
+                  transition-[fill,transform,color]
+                  duration-[250ms]
+                  ease-out
+                  motion-reduce:transition-none
+                  group-hover/favorite:scale-110
+                  ${
+                    isFavorite
+                      ? "fill-current text-[#A61922]"
+                      : "fill-none group-hover/favorite:fill-[#A61922] group-hover/favorite:text-[#A61922]"
+                  }
+                `}
               />
             )}
 

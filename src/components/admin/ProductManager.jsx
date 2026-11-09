@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import {
   Plus,
   Pencil,
@@ -12,6 +12,10 @@ import {
   Package,
   Images,
   ImagePlus,
+  Search,
+  Save,
+  AlertTriangle,
+  PackageX,
 } from "lucide-react";
 
 import {
@@ -19,6 +23,7 @@ import {
   updateProductAction,
   toggleProductAction,
   deleteProductAction,
+  updateProductStockAction,
 } from "@/app/admin/urunler/actions";
 
 import ProductImageManager from "@/components/admin/ProductImageManager";
@@ -60,12 +65,36 @@ export default function ProductManager({ products, categories }) {
   const [editingId, setEditingId] = useState(null);
   const [imageProductId, setImageProductId] = useState(null);
   const [message, setMessage] = useState(null);
+  const [search, setSearch] = useState("");
+  const [stockFilter, setStockFilter] = useState("all");
+  const [stockEditingId, setStockEditingId] = useState(null);
+  const [stockDraft, setStockDraft] = useState("");
 
   const [pending, startTransition] = useTransition();
 
   const formRef = useRef(null);
 
   const isBusy = pending;
+
+  const stockStats = useMemo(() => ({
+    total: products.length,
+    low: products.filter((product) => product.stock >= 1 && product.stock <= 5).length,
+    out: products.filter((product) => product.stock === 0).length,
+  }), [products]);
+
+  const filteredProducts = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase("tr-TR");
+    return products.filter((product) => {
+      const matchesSearch = !query ||
+        product.name.toLocaleLowerCase("tr-TR").includes(query) ||
+        product.categoryName.toLocaleLowerCase("tr-TR").includes(query);
+      const matchesStock = stockFilter === "all" ||
+        (stockFilter === "available" && product.stock > 5) ||
+        (stockFilter === "low" && product.stock >= 1 && product.stock <= 5) ||
+        (stockFilter === "out" && product.stock === 0);
+      return matchesSearch && matchesStock;
+    });
+  }, [products, search, stockFilter]);
 
   function setField(key, value) {
     setForm((current) => ({
@@ -79,11 +108,56 @@ export default function ProductManager({ products, categories }) {
     setEditingId(null);
   }
 
+  function beginStockEdit(product) {
+    if (isBusy) return;
+    setStockEditingId(product.id);
+    setStockDraft(String(product.stock));
+    setMessage(null);
+  }
+
+  function cancelStockEdit() {
+    setStockEditingId(null);
+    setStockDraft("");
+  }
+
+  function saveStock(product) {
+    if (isBusy) return;
+    const raw = stockDraft.trim();
+    const value = Number(raw);
+    if (!/^\d+$/.test(raw) || !Number.isSafeInteger(value) || value > 1000000) {
+      setMessage({ type: "error", text: "Stok miktarı 0 ile 1.000.000 arasında tam sayı olmalıdır." });
+      return;
+    }
+    if (value === product.stock) {
+      cancelStockEdit();
+      return;
+    }
+    const data = new FormData();
+    data.set("id", product.id);
+    data.set("stock", raw);
+    setMessage(null);
+    startTransition(async () => {
+      try {
+        const result = await updateProductStockAction(data);
+        if (result.success) {
+          cancelStockEdit();
+          setMessage({ type: "success", text: `“${product.name}” stok miktarı ${value} olarak güncellendi.` });
+        } else {
+          setMessage({ type: "error", text: result.error ?? "Stok güncellenemedi." });
+        }
+      } catch (error) {
+        console.error("Stok güncelleme hatası:", error);
+        setMessage({ type: "error", text: "Stok güncellenirken bir hata oluştu." });
+      }
+    });
+  }
+
   function handleEdit(product) {
     if (isBusy) return;
 
     setEditingId(product.id);
     setImageProductId(null);
+    cancelStockEdit();
 
     setForm({
       name: product.name,
@@ -208,12 +282,15 @@ export default function ProductManager({ products, categories }) {
 
     runAction(
       deleteProductAction,
+  updateProductStockAction,
       product.id,
       "Ürün başarıyla silindi.",
       () => {
         if (editingId === product.id) {
           resetForm();
         }
+
+        if (stockEditingId === product.id) cancelStockEdit();
 
         if (imageProductId === product.id) {
           setImageProductId(null);
@@ -486,6 +563,23 @@ export default function ProductManager({ products, categories }) {
         </div>
       )}
 
+      {/* STOK ÖZETİ */}
+      <section aria-label="Stok özeti" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {[
+          { label: "Toplam Ürün", value: stockStats.total, icon: Package, color: "text-[#191C19]" },
+          { label: "Kritik Stok (1–5)", value: stockStats.low, icon: AlertTriangle, color: "text-[#A66B20]" },
+          { label: "Tükenen Ürün", value: stockStats.out, icon: PackageX, color: "text-[#A61922]" },
+        ].map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="min-w-0 border-b border-[#D9DCD6] bg-white/40 px-5 py-5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-medium text-[#747974]">{label}</span>
+              <Icon size={18} className={color} strokeWidth={1.6} />
+            </div>
+            <p className={`mt-4 text-3xl font-semibold tracking-tight ${color}`}>{value}</p>
+          </div>
+        ))}
+      </section>
+
       {/* ÜRÜN LİSTESİ */}
       <section className="min-w-0">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -504,6 +598,42 @@ export default function ProductManager({ products, categories }) {
           </span>
         </div>
 
+        <div className="mb-7 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <label className="relative block w-full md:max-w-sm">
+            <span className="mb-2 block text-xs font-semibold text-[#626862]">Ürün veya kategori ara</span>
+            <Search size={17} className="pointer-events-none absolute bottom-4 left-0 text-[#898D88]" />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Ürün adı veya kategori..."
+              className={`${inputClass} pl-7`}
+            />
+          </label>
+          <div className="flex flex-wrap gap-2" aria-label="Stok filtresi">
+            {[
+              { key: "all", label: "Tümü" },
+              { key: "available", label: "Stokta (6+)" },
+              { key: "low", label: "Kritik (1–5)" },
+              { key: "out", label: "Tükenen (0)" },
+            ].map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                onClick={() => setStockFilter(filter.key)}
+                aria-pressed={stockFilter === filter.key}
+                className={`px-3 py-2 text-xs font-semibold transition-colors ${
+                  stockFilter === filter.key
+                    ? "bg-[#191C19] text-white"
+                    : "border border-[#D9DCD6] text-[#747974] hover:border-[#A61922] hover:text-[#A61922]"
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {products.length === 0 ? (
           <div className="border-y border-[#D9DCD6] py-16 text-center">
             <Package
@@ -516,9 +646,13 @@ export default function ProductManager({ products, categories }) {
               Henüz ürün oluşturulmadı.
             </p>
           </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="border-y border-[#D9DCD6] py-14 text-center text-sm text-[#747974]">
+            Arama ve stok filtresine uygun ürün bulunamadı.
+          </div>
         ) : (
           <div className="divide-y divide-[#D9DCD6] border-y border-[#D9DCD6]">
-            {products.map((product) => {
+            {filteredProducts.map((product) => {
               const images = product.images ?? [];
 
               const isImagePanelOpen =
@@ -559,8 +693,20 @@ export default function ProductManager({ products, categories }) {
 
                         <p className="mt-1 text-xs leading-5 text-[#898D88]">
                           {product.categoryName}
-                          {" · "}
-                          Stok: {product.stock}
+                        </p>
+
+                        <p className={`mt-1 text-xs font-semibold ${
+                          product.stock === 0
+                            ? "text-[#A61922]"
+                            : product.stock <= 5
+                              ? "text-[#A66B20]"
+                              : "text-[#46735C]"
+                        }`}>
+                          {product.stock === 0
+                            ? "Stok tükendi"
+                            : product.stock <= 5
+                              ? `Kritik stok · ${product.stock} adet`
+                              : `Stokta · ${product.stock} adet`}
                         </p>
 
                         <p className="mt-1 text-[11px] text-[#898D88]">
@@ -675,6 +821,41 @@ export default function ProductManager({ products, categories }) {
                         <Trash2 size={17} />
                       </button>
                     </div>
+                  </div>
+
+                  {/* HIZLI STOK GÜNCELLEME */}
+                  <div className="mt-4 flex flex-wrap items-center gap-3 sm:pl-24">
+                    {stockEditingId === product.id ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label htmlFor={`stock-${product.id}`} className="text-xs font-medium text-[#626862]">Yeni stok</label>
+                        <input
+                          id={`stock-${product.id}`}
+                          type="number"
+                          min="0"
+                          max="1000000"
+                          step="1"
+                          value={stockDraft}
+                          disabled={isBusy}
+                          onChange={(event) => setStockDraft(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") { event.preventDefault(); saveStock(product); }
+                            if (event.key === "Escape") cancelStockEdit();
+                          }}
+                          className="h-9 w-28 border-b border-[#C8CCC5] bg-transparent px-2 text-sm outline-none focus:border-[#A61922] focus:outline-none focus:ring-0"
+                        />
+                        <button type="button" disabled={isBusy} onClick={() => saveStock(product)} className="inline-flex h-9 items-center gap-1.5 bg-[#A61922] px-3 text-xs font-semibold text-white hover:bg-[#85141B] disabled:opacity-50">
+                          {isBusy ? <LoaderCircle size={14} className="animate-spin" /> : <Save size={14} />}
+                          Kaydet
+                        </button>
+                        <button type="button" disabled={isBusy} onClick={cancelStockEdit} className="inline-flex h-9 items-center gap-1 px-2 text-xs text-[#747974] hover:text-[#A61922] disabled:opacity-50">
+                          <X size={14} /> Vazgeç
+                        </button>
+                      </div>
+                    ) : (
+                      <button type="button" disabled={isBusy} onClick={() => beginStockEdit(product)} className="inline-flex items-center gap-2 text-xs font-semibold text-[#747974] transition-colors hover:text-[#A61922] disabled:opacity-50">
+                        <Pencil size={14} /> Stoku Hızlı Güncelle
+                      </button>
+                    )}
                   </div>
 
                   {/* ÜRÜNE ÖZEL GÖRSEL YÖNETİMİ */}

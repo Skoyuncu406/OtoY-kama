@@ -271,7 +271,7 @@ export default function Hero() {
             lg:pt-0
           "
         >
-          <div className="w-full max-w-[900px]">
+          <div className="w-full max-w-[900px] lg:-translate-y-16 xl:-translate-y-20">
             {/* EYEBROW */}
             <p
               className="
@@ -303,7 +303,8 @@ export default function Hero() {
                 tracking-[-0.06em]
                 text-white
                 sm:text-[clamp(2.35rem,8vw,6.7rem)]
-                lg:leading-[0.9]
+                lg:text-[clamp(3.2rem,5.3vw,5.4rem)]
+                lg:leading-[0.94]
               "
             >
               Kusursuzluk

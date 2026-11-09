@@ -22,6 +22,7 @@ import {
   UserPlus,
   LogOut,
   ShieldCheck,
+  ClipboardList,
 } from "lucide-react";
 
 import { customerLogoutAction } from "@/app/hesabim/actions";
@@ -791,6 +792,25 @@ export default function Header() {
                         </Link>
                       </div>
                     )}
+
+                    {/* Üye, misafir ve yönetici için herkese açık sipariş takibi */}
+                    <div className="border-t border-[#E0E0D9] py-2">
+                      <Link
+                        href="/siparis-takip"
+                        role="menuitem"
+                        tabIndex={accountOpen ? 0 : -1}
+                        aria-current={pathname === "/siparis-takip" ? "page" : undefined}
+                        onClick={() => setAccountOpen(false)}
+                        className={`flex items-center gap-4 px-6 py-4 text-[12px] font-medium transition-colors hover:bg-[#EAECE7] hover:text-[#A61922] ${
+                          pathname === "/siparis-takip"
+                            ? "text-[#A61922]"
+                            : "text-[#303530]"
+                        }`}
+                      >
+                        <ClipboardList size={17} strokeWidth={1.5} />
+                        Sipariş Takip
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>

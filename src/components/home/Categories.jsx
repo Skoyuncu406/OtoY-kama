@@ -37,9 +37,7 @@ export default function Categories({ categories = [] }) {
         {/* CATEGORY GRID */}
         {totalCategories > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 lg:gap-7">
-            {categories.map((category, index) => {
-              const number = String(index + 1).padStart(2, "0");
-              const total = String(totalCategories).padStart(2, "0");
+            {categories.map((category) => {
               const categoryName =
                 category.title || category.name;
 
@@ -91,58 +89,8 @@ export default function Categories({ categories = [] }) {
                           "
                         />
                       ) : (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#242826]">
-                          <ImageIcon
-                            size={32}
-                            strokeWidth={1.2}
-                            className="text-white/35"
-                          />
-
-                          <span className="max-w-[85%] text-center font-[family-name:var(--font-manrope)] text-xs font-medium text-white/60">
-                            {categoryName}
-                          </span>
-                        </div>
+                        <div className="absolute inset-0 bg-[#242826]" />
                       )}
-
-                      {/* CATEGORY NUMBER */}
-                      <span className="absolute left-2 top-2 z-10 bg-[#111312]/75 px-2 py-1 font-[family-name:var(--font-manrope)] text-[9px] font-semibold tracking-[0.12em] text-white backdrop-blur-sm sm:left-4 sm:top-4 sm:text-[10px]">
-                        {number} / {total}
-                      </span>
-
-                      {/* ARROW */}
-                      <span
-                        className="
-                          absolute
-                          bottom-2
-                          right-2
-                          z-10
-                          flex
-                          h-8
-                          w-8
-                          items-center
-                          justify-center
-                          border
-                          border-white/20
-                          bg-white/95
-                          text-[#111312]
-                          transition-all
-                          duration-500
-                          group-hover:-translate-y-0.5
-                          group-hover:translate-x-0.5
-                          group-hover:border-[#A61922]
-                          group-hover:bg-[#A61922]
-                          group-hover:text-white
-                          sm:bottom-4
-                          sm:right-4
-                          sm:h-11
-                          sm:w-11
-                        "
-                      >
-                        <ArrowUpRight
-                          size={18}
-                          strokeWidth={1.7}
-                        />
-                      </span>
                     </div>
 
                     {/* CATEGORY INFORMATION */}

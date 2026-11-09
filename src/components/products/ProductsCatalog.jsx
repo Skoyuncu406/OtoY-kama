@@ -790,7 +790,7 @@ function ProductItem({
             onClick={() => onToggleFavorite(product.id)}
             aria-pressed={isFavorite}
             aria-label={isFavorite ? `${product.name} ürününü favorilerden çıkar` : `${product.name} ürününü favorilere ekle`}
-            className={`flex min-h-[44px] w-full items-center justify-center gap-2 border px-2 font-[family-name:var(--font-manrope)] text-[9px] font-semibold uppercase tracking-[0.04em] transition-all duration-300 disabled:cursor-wait disabled:opacity-60 sm:min-h-[46px] sm:gap-3 sm:px-4 sm:text-[10px] sm:tracking-[0.07em] ${
+            className={`group/favorite flex min-h-[44px] w-full items-center justify-center gap-2 border px-2 font-[family-name:var(--font-manrope)] text-[9px] font-semibold uppercase tracking-[0.04em] transition-all duration-300 disabled:cursor-wait disabled:opacity-60 sm:min-h-[46px] sm:gap-3 sm:px-4 sm:text-[10px] sm:tracking-[0.07em] ${
               isFavorite
                 ? "border-[#A61922] bg-[#F4F3EF] text-[#A61922] hover:bg-[#FBEAEC]"
                 : "border-[#C8CDC7] bg-transparent text-[#111312] hover:border-[#A61922] hover:text-[#A61922]"
@@ -799,7 +799,15 @@ function ProductItem({
             {favoriteLoading ? (
               <LoaderCircle size={16} strokeWidth={1.7} className="animate-spin" />
             ) : (
-              <Heart size={16} strokeWidth={1.7} fill={isFavorite ? "currentColor" : "none"} />
+              <Heart
+                size={16}
+                strokeWidth={1.7}
+                className={`transition-[fill,transform,color] duration-[250ms] ease-out motion-reduce:transition-none group-hover/favorite:scale-110 ${
+                  isFavorite
+                    ? "fill-current text-[#A61922]"
+                    : "fill-none group-hover/favorite:fill-[#A61922] group-hover/favorite:text-[#A61922]"
+                }`}
+              />
             )}
             <span>{isFavorite ? "Favorilerden Çıkar" : "Favorilere Ekle"}</span>
           </button>

@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -8,16 +7,20 @@ datasource db {
   provider = "postgresql"
 }
 
+// YÖNETİCİLER
+
 model AdminUser {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String  @id @default(cuid())
+  email        String  @unique
   name         String
   passwordHash String
-  isActive     Boolean  @default(true)
+  isActive     Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// KATEGORİLER
 
 model Category {
   id       String  @id @default(cuid())
@@ -32,6 +35,8 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ÜRÜNLER
 
 model Product {
   id           String   @id @default(cuid())
@@ -49,14 +54,17 @@ model Product {
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
-  images    ProductImage[]
-  favorites Favorite[]
+  images     ProductImage[]
+  favorites  Favorite[]
+  orderItems OrderItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([categoryId])
 }
+
+// ÜRÜN GÖRSELLERİ
 
 model ProductImage {
   id       String  @id @default(cuid())
@@ -72,6 +80,8 @@ model ProductImage {
   @@index([productId])
 }
 
+// MÜŞTERİLER
+
 model Customer {
   id             String  @id @default(cuid())
   username       String  @unique
@@ -81,6 +91,7 @@ model Customer {
   sessionVersion Int     @default(0)
 
   favorites Favorite[]
+  orders    Order[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -102,4 +113,161 @@ model Favorite {
   @@unique([customerId, productId])
   @@index([customerId])
   @@index([productId])
+}
+
+// ÖDEME YÖNTEMLERİ
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+  ONLINE_PAYMENT
+}
+
+// ÖDEME DURUMLARI
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+// SİPARİŞ DURUMLARI
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// SİPARİŞ İPTAL TALEBİ DURUMLARI
+
+enum CancellationRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// SİPARİŞLER
+
+model Order {
+  id             String  @id @default(cuid())
+  orderNumber    String  @unique
+  idempotencyKey String? @unique
+
+  // Benzersiz, tahmin edilmesi zor sipariş takip kodu.
+  // Kod sipariş oluşturma API'sinde üretilecek.
+  // Mevcut siparişler için sonradan doldurulacak.
+  trackingCode String? @unique
+
+  // Müşteri ilişkisi:
+  // Üye siparişinde customerId dolu,
+  // misafir siparişinde null olacak.
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+
+  // Teslimat bilgileri
+  fullName   String
+  email      String
+  phone      String
+  city       String
+  district   String
+  address    String
+  postalCode String?
+  orderNote  String?
+
+  // Sipariş tutarları
+  subtotal    Decimal @db.Decimal(10, 2)
+  shippingFee Decimal @default(0) @db.Decimal(10, 2)
+  paymentFee  Decimal @default(0) @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(10, 2)
+
+  // Sipariş ve ödeme durumları
+  status        OrderStatus   @default(PENDING)
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus @default(PENDING)
+
+  // Online ödeme sağlayıcısı bilgileri
+  paymentProvider      String?
+  paymentTransactionId String?
+  paymentReference     String?
+
+  // Kargo takip bilgileri
+  shippingCompany String?
+  trackingNumber  String?
+  trackingUrl     String?
+
+  // Tarihler
+  paidAt      DateTime?
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+  cancelledAt DateTime?
+
+  // Sipariş ürünleri
+  items OrderItem[]
+
+  // İptal talebi - bire bir ilişki
+  cancellationRequest CancellationRequest?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+// SİPARİŞ KALEMLERİ
+
+model OrderItem {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  // Sipariş anındaki ürün bilgileri
+  productName  String
+  productImage String?
+  unitPrice    Decimal @db.Decimal(10, 2)
+  quantity     Int
+  totalPrice   Decimal @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// SİPARİŞ İPTAL TALEPLERİ
+
+model CancellationRequest {
+  id String @id @default(cuid())
+
+  // Her sipariş için yalnızca bir iptal talebi
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // Müşterinin iptal gerekçesi
+  reason String
+
+  // Talep durumu
+  status CancellationRequestStatus @default(PENDING)
+
+  // Yönetici değerlendirmesi
+  adminNote String?
+
+  // Değerlendirme tarihi
+  reviewedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
 }

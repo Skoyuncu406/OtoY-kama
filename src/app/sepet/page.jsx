@@ -15,6 +15,17 @@ import {
 
 import { useCart } from "@/context/CartContext";
 
+// Eski sepet kayıtlarında stok alanı olmayabilir.
+// Bilinmeyen stok, sıfır stok olarak değerlendirilmez.
+function getStock(item) {
+  if (item.stock === null || item.stock === undefined || item.stock === "") {
+    return null;
+  }
+
+  const stock = Number(item.stock);
+  return Number.isFinite(stock) ? Math.max(0, Math.floor(stock)) : null;
+}
+
 const formatPrice = new Intl.NumberFormat("tr-TR", {
   style: "currency",
   currency: "TRY",
@@ -167,6 +178,18 @@ export default function CartPage() {
                           <p className="mt-3 text-[12px] font-semibold sm:text-[14px]">
                             {formatPrice.format(item.price)}
                           </p>
+
+                          {getStock(item) !== null && (
+                            <p className={`mt-2 text-[10px] font-medium ${
+                              getStock(item) === 0
+                                ? "text-[#A61922]"
+                                : "text-[#626A64]"
+                            }`}>
+                              {getStock(item) === 0
+                                ? "Stokta yok"
+                                : `Stok: ${getStock(item)} adet`}
+                            </p>
+                          )}
                         </div>
 
                         <button
@@ -202,7 +225,17 @@ export default function CartPage() {
                               updateQuantity(item.id, item.quantity + 1)
                             }
                             aria-label="Adedi artır"
-                            className="flex h-full w-9 items-center justify-center transition-colors hover:bg-[#E6E8E3]"
+                            disabled={
+                              getStock(item) !== null &&
+                              item.quantity >= getStock(item)
+                            }
+                            title={
+                              getStock(item) !== null &&
+                              item.quantity >= getStock(item)
+                                ? "Stok sınırına ulaşıldı"
+                                : "Adedi artır"
+                            }
+                            className="flex h-full w-9 items-center justify-center transition-colors hover:bg-[#E6E8E3] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
                           >
                             <Plus size={14} />
                           </button>
@@ -250,27 +283,49 @@ export default function CartPage() {
 
                 <div className="mt-7 flex items-center justify-between gap-4">
                   <span className="text-[13px] font-semibold">
-                    Toplam
+                    Toplam (kargo hariç)
                   </span>
                   <span className="font-[family-name:var(--font-manrope)] text-[23px] font-bold tracking-[-0.04em]">
                     {formatPrice.format(cartTotal)}
                   </span>
                 </div>
 
-                <button
-                  type="button"
-                  disabled
-                  title="Ödeme altyapısı henüz hazırlanıyor"
-                  className="mt-8 flex min-h-[52px] w-full cursor-not-allowed items-center justify-between bg-[#111312] px-5 text-[11px] font-bold uppercase tracking-[0.08em] text-white opacity-60"
-                >
-                  Ödemeye Geç
-                  <ArrowRight size={18} strokeWidth={1.5} />
-                </button>
+                
 
-                <p className="mt-4 text-center text-[11px] leading-6 text-[#858B85]">
-                  Online ödeme ve sipariş oluşturma altyapısı
-                  henüz aktif değil.
-                </p>
+<Link
+  href="/odeme"
+  className="
+    group mt-8 flex min-h-[54px] w-full
+    items-center justify-between gap-4
+    border border-[#111312]
+    !bg-[#111312] px-5
+    font-[family-name:var(--font-manrope)]
+    text-[11px] font-bold uppercase
+    tracking-[0.1em] !text-white
+    transition-all duration-300
+    hover:!border-[#A61922]
+    hover:!bg-[#A61922]
+    hover:!text-white
+  "
+>
+  <span className="!text-white">
+    Ödemeye Geç
+  </span>
+
+  <ArrowRight
+    size={18}
+    strokeWidth={1.6}
+    className="!text-white transition-transform duration-300 group-hover:translate-x-1"
+  />
+</Link>
+
+
+
+<p className="mt-4 text-center text-[11px] leading-6 text-[#858B85]">
+  Teslimat bilgilerinizi girerek ödeme yönteminizi
+  bir sonraki adımda seçebilirsiniz.
+</p>
+
 
                 <div className="mt-8 flex items-start gap-3 border-t border-[#D8DBD7] pt-6">
                   <ShieldCheck
