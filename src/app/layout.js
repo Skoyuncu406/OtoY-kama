@@ -95,20 +95,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="tr" data-scroll-behavior="smooth">
-      <body
-        className={`${inter.variable} ${manrope.variable} min-w-0 overflow-x-clip`}
-      >
-        <CartProvider>
-          <div data-revora-sticky-header className="sticky top-0 z-50 w-full">
-            <AnnouncementBar />
-            <Header />
-          </div>
-
-          {children}
-
-          <Footer />
-        </CartProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
